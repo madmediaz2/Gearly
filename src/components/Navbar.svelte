@@ -1,10 +1,9 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import { onMount, onDestroy } from "svelte";
   import { fly } from "svelte/transition";
   import AuthPopup from "./AuthPopup.svelte";
 
-  let searchQuery = "";
+  let searchQuery = $state("");
   let sheetOpen = $state(false);
   let authPopupOpen = $state(false);
 
@@ -88,6 +87,7 @@
           class="block w-full p-3 ps-8 sm:p-4 sm:ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-gray-500 focus:border-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-focus-500 dark:focus:border-focus-500"
           placeholder="Zoeken naar producten.."
           required
+          bind:value={searchQuery}
         />
         <button
           type="submit"
@@ -219,7 +219,6 @@
           class="w-10 h-10 white"
         />
       </button>
-      <!-- Auth Popup -->
       <AuthPopup isOpen={authPopupOpen} onClose={closeAuthPopup} />
       <button class="cursor-pointer" onclick={toggleAuthPopup}>
         <img src="/avatar.svg" alt="Shopping Cart" class="w-10 h-10 white" />

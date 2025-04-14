@@ -2,7 +2,12 @@
   import { browser } from "$app/environment";
   import { fly } from "svelte/transition";
 
-  let { isOpen, onClose }: { isOpen: boolean; onClose: () => void } = $props();
+  interface Props {
+    isOpen: boolean;
+    onClose: () => void;
+  }
+
+  const { isOpen, onClose }: Props = $props();
 
   // Local state
   let isLogin: boolean = $state(true);

@@ -39,7 +39,7 @@
     const variantStyles = {
         default: "pointer-events-auto cursor-pointer",
         primary:
-            "bg-black text-white py-2 px-4 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500",
+            "pointer-events-auto cursor-pointer bg-black text-white py-2 px-4 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500",
         icon: "cursor-pointer",
         footer: "cursor-pointer hover:opacity-80 transition-opacity",
         navigation:
@@ -50,7 +50,7 @@
         social: "flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black pointer-events-auto cursor-pointer",
         "cart-item": "flex items-center bg-transparent border-none text-gray-500 text-xs cursor-pointer hover:text-black",
         error:
-            "bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+            "pointer-events-auto cursor-pointer bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
     };
 
     const sizeStyles = {

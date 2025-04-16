@@ -15,7 +15,7 @@
         isLoading?: boolean;
     }
 
-    const { children, title, isOpen, onClose, errorMessage, titleSeperator, isLoading = $bindable(false)}: Props = $props();
+    let { children, title, isOpen, onClose, errorMessage = $bindable(), titleSeperator, isLoading = $bindable(false)}: Props = $props();
 
     let isSmallScreen: boolean = $state(false);
 
@@ -83,7 +83,7 @@
                     <!-- svelte-ignore a11y_consider_explicit_label -->
                     <Button
                         variant="icon"
-                        className="rounded-md text-gray-500 hover:bg-gray-100 p-2 mb-1"
+                        className="rounded-md text-gray-500 {!isLoading && "hover:bg-gray-100"} p-2 mb-1"
                         onclick={onClose}
                         disabled={isLoading}
                     >

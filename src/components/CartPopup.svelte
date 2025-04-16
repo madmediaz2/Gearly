@@ -1,6 +1,7 @@
 <script lang="ts">
     import Popup from "./ui/Popup.svelte";
     import Button from "./ui/Button.svelte";
+    import Input from "./ui/Input.svelte";
     import { cart } from "../lib/stores/cart";
     import { browser } from "$app/environment";
 
@@ -34,6 +35,7 @@
     }
 
     let totalPrice = $state(0);
+    let discountCode = $state<string>()
 
     $effect(() => {
         totalPrice = $cart.reduce(
@@ -135,14 +137,12 @@
                 </Button>
 
                 <form class="flex items-center w-full sm:w-auto">
-                    <label for="discount-code" class="sr-only"
-                        >Kortingscode</label
-                    >
-                    <input
+                    <label for="discount-code" class="sr-only">Kortingscode</label>
+                    <Input
                         id="discount-code"
-                        type="text"
+                        variant="discount"
                         placeholder="Kortingscode invoeren.."
-                        class="p-2 text-center border border-gray-300 rounded w-full sm:w-48 focus:outline-none"
+                        bind:bindValue={discountCode}
                     />
                 </form>
 

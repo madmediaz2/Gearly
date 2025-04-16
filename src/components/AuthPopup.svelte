@@ -5,6 +5,7 @@
     import { user, updateUser } from "$lib/stores/authStore";
     import Popup from "./ui/Popup.svelte";
     import Button from "./ui/Button.svelte";
+    import Input from "./ui/Input.svelte";
 
     interface Props {
         isOpen: boolean;
@@ -117,57 +118,42 @@
     <form onsubmit={handleSubmit} class="space-y-4">
         {#if !isLogin}
             <div>
-                <label
-                    for="name"
-                    class="block text-sm font-medium text-gray-700">Naam</label
-                >
-                <input
-                    type="text"
+                <Input
                     id="name"
-                    bind:value={name}
-                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black"
+                    label="Naam"
+                    type="text"
                     required
                     disabled={isLoading}
+                    bind:bindValue={name}
                 />
             </div>
         {/if}
-
         <div>
-            <label for="email" class="block text-sm font-medium text-gray-700"
-                >Email</label
-            >
-            <input
-                type="email"
+            <Input
                 id="email"
-                bind:value={email}
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black"
+                label="Email"
+                type="email"
                 required
                 disabled={isLoading}
+                bind:bindValue={email}
             />
         </div>
-
         <div>
-            <label
-                for="password"
-                class="block text-sm font-medium text-gray-700"
-                >Wachtwoord</label
-            >
-            <input
-                type="password"
+            <Input
                 id="password"
-                bind:value={password}
-                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black"
+                label="Wachtwoord"
+                type="password"
                 required
                 disabled={isLoading}
+                bind:bindValue={password}
             />
         </div>
-
         <div>
             <Button
                 type="submit"
                 disabled={isLoading}
                 variant="primary"
-				className="w-full"
+                className="w-full"
             >
                 {#if isLoading}
                     <span>Bezig...</span>
@@ -183,7 +169,7 @@
         <Button
             type="button"
             variant="social"
-			className="w-full"
+            className="w-full"
             onclick={handleGoogleLogin}
             disabled={isLoading}
         >

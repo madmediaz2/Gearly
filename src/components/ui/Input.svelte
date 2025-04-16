@@ -16,7 +16,7 @@
         required = false,
         className = '',
         bindValue = $bindable(),
-    }: InputProps = $props();
+    }: Partial<InputProps> = $props();
 </script>
 
 {#if label}

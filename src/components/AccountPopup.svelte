@@ -1,6 +1,7 @@
 <script lang="ts">
     import Popup from "./ui/Popup.svelte";
     import Button from "./ui/Button.svelte";
+    import Input from "./ui/Input.svelte";
     import { getUsername, isLoading as isLoadingStore, changeUsername, changePassword, isOAuthLogin } from "$lib/stores/authStore";
     import { writable } from "svelte/store";
     import { onDestroy } from "svelte";
@@ -34,7 +35,7 @@
     const oauth = isOAuthLogin();
 
     async function handleUsernameChange() {
-      processingUsername = true;
+      isLoading = true;
       try {
         await changeUsername(newUsername);
         // Update the local username state after successful change
@@ -42,19 +43,19 @@
       } catch (error) {
         console.error("Error updating username:", error);
       } finally {
-        processingUsername = false;
+        isLoading = false;
       }
     }
 
     async function handlePasswordChange() {
-      processingPassword = true;
+      isLoading = true;
       try {
         await changePassword(newPassword as string);
 
       } catch (error) {
 
       }
-      processingPassword = false;
+      isLoading = false;
       newPassword = "";
     }
 </script>
@@ -63,15 +64,13 @@
     <div class="space-y-4">
         <!-- Change Username -->
         <div>
-            <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
-            <input id="username" type="text" bind:value={newUsername} class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+            <Input id="username" label="Username" type="text" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" bind:bindValue={newUsername} />
             <Button onclick={handleUsernameChange} disabled={processingUsername} className="mt-2">Update Username</Button>
         </div>
         <!-- Change Password (if not OAuth) -->
         {#if !oauth}
         <div>
-            <label for="new-password" class="block text-sm font-medium text-gray-700">New Password</label>
-            <input id="new-password" type="password" bind:value={newPassword} class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+            <Input id="new-password" label="New Password" type="password" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" bind:bindValue={newPassword as string} />
             <Button onclick={handlePasswordChange} disabled={processingPassword} className="mt-2">Update Password</Button>
         </div>
         {/if}

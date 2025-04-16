@@ -1,10 +1,14 @@
 <script lang="ts">
     import { cn } from "$lib/utils/index";
+    import type { Snippet } from 'svelte';
+    import type { ClassValue } from "svelte/elements";
 
     interface InputProps extends HTMLInputElement {
-        variant?: 'text' | 'search' | 'discount';
+        variant?: 'text' | 'search' | 'discount' | 'button';
         label?: string;
         bindValue?: string;
+        buttonStyling?: ClassValue; 
+        Button?: Snippet;
     }
 
     let {
@@ -17,13 +21,17 @@
         required = false,
         className = '',
         bindValue = $bindable(),
+        buttonStyling = '',
+        Button = undefined,
     }: Partial<InputProps> = $props();
 
     const variantStyles = {
         text: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black",
         search: "block w-full p-3 ps-8 sm:p-4 sm:ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-gray-500 focus:border-gray-500",
-        discount: "p-2 text-center border border-gray-300 rounded w-full sm:w-48 focus:outline-none"
+        discount: "p-2 text-center border border-gray-300 rounded w-full sm:w-48 focus:outline-none",
+        button: "mt-2 block w-full px-3 py-2 pr-12 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black"
     };
+    
     const inputClasses = $derived(
         cn(
             variantStyles[variant],
@@ -64,13 +72,21 @@
     bind:value={bindValue}
   />
 {:else}
-  <input
-    id={id}
-    type={type}
-    class={inputClasses}
-    placeholder={placeholder}
-    required={required}
-    disabled={disabled}
-    bind:value={bindValue}
-  />
+  <div class={Button && "relative px-1"}>
+    <input
+      id={id}
+      type={type}
+      class={[Button && variantStyles.button, inputClasses]}
+      placeholder={placeholder}
+      required={required}
+      disabled={disabled}
+      bind:value={bindValue}
+    >
+    {#if Button}
+      <div class={[buttonStyling ,"absolute inset-y-0 end-0 flex items-center"]}>
+        {@render Button?.()}
+      </div>
+    {/if}
+  </div>
 {/if}
+ 

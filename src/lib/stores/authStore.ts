@@ -77,9 +77,57 @@ export async function logout(): Promise<void> {
   // goto('/'); // If using SvelteKit's goto for navigation
 }
 
+/**
+ * Updates the user's username in Supabase and syncs the store
+ */
+export async function changeUsername(newUsername: string): Promise<void> {
+  const { data, error } = await supabase.auth.updateUser({ data: { username: newUsername } });
+  if (error) {
+    console.error('Error changing username:', error);
+    throw error;
+  }
+  user.set(data.user);
+}
+
+/**
+ * Updates the user's password in Supabase and syncs the store
+ */
+export async function changePassword(newPassword: string): Promise<void> {
+  const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) {
+    console.error('Error changing password:', error);
+    throw error;
+  }
+  user.set(data.user);
+}
+
+/**
+ * Updates the user's profile image URL in Supabase and syncs the store
+ */
+export async function changeUserImage(newImageUrl: string): Promise<void> {
+  const { data, error } = await supabase.auth.updateUser({ data: { avatar_url: newImageUrl } });
+  if (error) {
+    console.error('Error changing user image:', error);
+    throw error;
+  }
+  user.set(data.user);
+}
+
 // Subscribe to auth state changes
 if (typeof window !== 'undefined') {
   supabase.auth.onAuthStateChange((event, session) => {
     user.set(session?.user ?? null);
   });
+}
+
+/**
+ * Checks if the current user logged in via OAuth provider
+ */
+export function isOAuthLogin(): boolean {
+  const current = get(user);
+  if (!current) return false;
+  // Supabase stores all sign-in methods in app_metadata.providers
+  const providers: string[] = current.app_metadata?.providers ?? [];
+  // OAuth providers are anything other than 'email'
+  return providers.some(p => p !== 'email');
 }

@@ -11,12 +11,13 @@
         onClose: () => void;
         errorMessage?: string;
         titleSeperator?: boolean;
+        isSmallScreen?: boolean;
+        isLoading?: boolean;
     }
 
-    const { children, title, isOpen, onClose, errorMessage, titleSeperator }: Props = $props();
+    const { children, title, isOpen, onClose, errorMessage, titleSeperator, isLoading = $bindable(false)}: Props = $props();
 
     let isSmallScreen: boolean = $state(false);
-    let isLoading: boolean = $state(false);
 
     $effect(() => {
         if (browser) {
@@ -41,7 +42,7 @@
     $effect(() => {
         if (browser && isOpen) {
             const handleEscKey = (event: KeyboardEvent) => {
-                if (event.key === "Escape") {
+                if (event.key === "Escape" && !isLoading) {
                     onClose();
                 }
             };
@@ -63,7 +64,11 @@
         <!-- Overlay --><!-- svelte-ignore a11y_no_static_element_interactions --><!-- svelte-ignore a11y_click_events_have_key_events -->
         <div
             class="absolute inset-0 opacity-60 blur-sm sm:opacity-60 sm:blur-3xl bg-gray-100 transition-opacity"
-            onclick={onClose}
+            onclick={() => {
+                if(!isLoading){
+                    onClose()
+                }
+            }}
         ></div>
 
         <!-- Popup Content -->

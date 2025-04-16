@@ -13,12 +13,10 @@
 
     const { isOpen, onClose }: Props = $props();
 
-    // Local state
     let isLogin: boolean = $state(true);
     let email: string = $state("");
     let password: string = $state("");
     let name: string = $state("");
-    let isSmallScreen: boolean = $state(false);
     let errorMessage: string = $state("");
     let isLoading: boolean = $state(false);
 
@@ -98,26 +96,6 @@
     }
 
     $effect(() => {
-        if (browser) {
-            const handleResize = () => {
-                if (window.innerWidth > 640) {
-                    isSmallScreen = false;
-                } else {
-                    isSmallScreen = true;
-                }
-            };
-
-            window.addEventListener("resize", handleResize);
-
-            handleResize();
-
-            return () => {
-                window.removeEventListener("resize", handleResize);
-            };
-        }
-    });
-
-    $effect(() => {
         if (browser && isOpen) {
             const handleEscKey = (event: KeyboardEvent) => {
                 if (event.key === "Escape") {
@@ -134,7 +112,7 @@
     });
 </script>
 
-<Popup title={isLogin ? "Inloggen" : "Registreren"} {isOpen} {onClose} errorMessage={errorMessage}>
+<Popup title={isLogin ? "Inloggen" : "Registreren"} {isOpen} {onClose} errorMessage={errorMessage} bind:isLoading={isLoading}>
     <!-- Form -->
     <form onsubmit={handleSubmit} class="space-y-4">
         {#if !isLogin}

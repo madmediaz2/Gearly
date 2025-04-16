@@ -2,6 +2,7 @@
     import Popup from "./ui/Popup.svelte";
     import Button from "./ui/Button.svelte";
     import { cart } from "../lib/stores/cart";
+    import { browser } from "$app/environment";
 
     interface Props {
         isOpen: boolean;
@@ -19,11 +20,13 @@
     }
 
     function decreaseQuantity(id: number) {
-        $cart = $cart.map((item) =>
-            item.id === id && (item.quantity || 1) > 1
+        const updatedCart = $cart.map((item) =>
+            item.id === id
                 ? { ...item, quantity: (item.quantity || 1) - 1 }
                 : item,
         );
+
+        $cart = updatedCart.filter((item) => item.quantity > 0);
     }
 
     function emptyCart() {
@@ -39,6 +42,28 @@
         );
     });
 
+    let isSmallScreen: boolean = $state(false);
+
+    $effect(() => {
+        if (browser) {
+            const handleResize = () => {
+                if (window.innerWidth > 640) {
+                    isSmallScreen = false;
+                } else {
+                    isSmallScreen = true;
+                }
+            };
+
+            window.addEventListener("resize", handleResize);
+
+            handleResize();
+
+            return () => {
+                window.removeEventListener("resize", handleResize);
+            };
+        }
+    });
+
     function capitalizeFirstLetter(str: string | undefined): string {
         if (!str) return "";
         return str.charAt(0).toUpperCase() + str.slice(1);
@@ -52,19 +77,21 @@
         <div class="flex flex-col gap-4">
             {#each $cart as item (item.id)}
                 <div class="flex items-center py-1 px-1 flex-row">
-                    <div
-                        class="w-16 h-16 bg-gray-100 flex items-center justify-center mr-4 rounded"
-                    >
-                        {#if item.brandImage}
-                            <img
-                                src={item.brandImage}
-                                alt={item.brand}
-                                class="max-w-full max-h-full object-contain"
-                            />
-                        {:else}
-                            [Brand Logo]
-                        {/if}
-                    </div>
+                    {#if !isSmallScreen}
+                        <div
+                            class="w-16 h-16 bg-gray-100 flex items-center justify-center mr-4 rounded"
+                        >
+                            {#if item.brandImage}
+                                <img
+                                    src={item.brandImage}
+                                    alt={item.brand}
+                                    class="max-w-full max-h-full object-contain"
+                                />
+                            {:else}
+                                <span>[Brand Logo]</span>
+                            {/if}
+                        </div>
+                    {/if}
                     <div class="flex-grow font-medium">
                         {capitalizeFirstLetter(item.name)}
                     </div>
@@ -96,12 +123,18 @@
         <hr class="my-4 border-t border-gray-200" />
 
         <section aria-label="Cart summary" class="mb-4">
-            <div class="flex items-center justify-between gap-2">
-                <Button variant="error" onclick={emptyCart} className="w-30">
+            <div
+                class="flex flex-col sm:flex-row items-center gap-3 sm:justify-between"
+            >
+                <Button
+                    variant="error"
+                    onclick={emptyCart}
+                    className="w-full sm:w-36"
+                >
                     Wissen
                 </Button>
 
-                <form class="flex items-center">
+                <form class="flex items-center w-full sm:w-auto">
                     <label for="discount-code" class="sr-only"
                         >Kortingscode</label
                     >
@@ -109,12 +142,15 @@
                         id="discount-code"
                         type="text"
                         placeholder="Kortingscode invoeren.."
-                        class="p-2 border border-gray-300 rounded w-48 focus:outline-none"
+                        class="p-2 text-center border border-gray-300 rounded w-full sm:w-48 focus:outline-none"
                     />
                 </form>
 
-                <output class="text-2xl font-bold" aria-label="Totaal bedrag">
-                    €{totalPrice.toFixed(2)}
+                <output
+                    class="text-xl sm:text-2xl font-bold mt-2 sm:mt-0"
+                    aria-label="Totaal bedrag"
+                >
+                    {#if isSmallScreen}Totaal:{/if}€{totalPrice.toFixed(2)}
                 </output>
             </div>
         </section>
@@ -122,7 +158,7 @@
         <footer>
             <Button
                 variant="primary"
-                className="w-full py-2 bg-black text-white rounded text-base"
+                className="w-full py-3 sm:py-2 bg-black text-white rounded text-base"
             >
                 Afrekenen
             </Button>

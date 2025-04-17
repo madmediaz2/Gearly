@@ -7,6 +7,7 @@
     import AccountPopup from "./AccountPopup.svelte";
     import CartPopup from "./CartPopup.svelte";
     import { type PopupControls } from "$lib/types/popupTypes";
+    import Button from "./ui/Button.svelte";
 
     let searchQuery = $state("");
     let sheetOpen = $state(false);
@@ -96,9 +97,9 @@
     >
         <!-- Left section (e.g., settings icon) -->
         <div class="flex items-center ml-3 sm:pr-3">
-            <button class="pointer-events-auto cursor-pointer">
+            <Button variant="default">
                 <img src="/gearly_logo.svg" alt="Settings" class="w-12 h-12" />
-            </button>
+            </Button>
             <span class="hidden sm:block pl-1 text-xl">Gearly</span>
         </div>
 
@@ -107,12 +108,9 @@
 
         <!-- Mobile -->
         <div class="sm:hidden mt-1 mr-3">
-            <button
-                onclick={toggleSheet}
-                class="pointer-events-auto cursor-pointer"
-            >
+            <Button variant="default" onclick={toggleSheet}>
                 <img src="/menu.svg" alt="hamburger menu" class="w-10 h-10" />
-            </button>
+            </Button>
         </div>
 
         <MobileSheet {sheetOpen} {toggleSheet} {popupControls} {onLogout} />
@@ -120,35 +118,35 @@
         <!-- Right section Shopping Icon & Account Avatar -->
         <div class="hidden sm:flex items-centery79 flex-row gap-3 pl-3">
             <CartPopup isOpen={cartPopupOpen} onClose={closeCartPopUp} />
-            <button class="cursor-pointer" onclick={toggleCartPopUp}>
+            <Button variant="icon" onclick={toggleCartPopUp}>
                 <img
                     src="/shopping_cart.svg"
                     alt="Shopping Cart"
                     class="w-10 h-10 white"
                 />
-            </button>
+            </Button>
             {#if !$user}
                 <AuthPopup isOpen={authPopupOpen} onClose={closeAuthPopup} />
-                <button class="cursor-pointer" onclick={toggleAuthPopup}>
+                <Button variant="icon" onclick={toggleAuthPopup}>
                     <img
                         src="/avatar.svg"
                         alt="Login"
                         class="w-10 h-10 white"
                     />
-                </button>
+                </Button>
             {:else}
                 <AccountPopup
                     isOpen={accountPopUpOpen}
                     onClose={closeAccountPopUp}
                     {onLogout}
                 />
-                <button class="cursor-pointer" onclick={toggleAccountPopUp}>
+                <Button variant="icon" onclick={toggleAccountPopUp}>
                     <img
                         src="/avatar.svg"
                         alt="Account Centrum"
                         class="w-10 h-10 white"
                     />
-                </button>
+                </Button>
             {/if}
         </div>
     </div>
@@ -157,38 +155,26 @@
     <div
         class="hidden sm:flex items-center justify-between flex-row bg-gray-100 p-1 border-b border-gray-300 px-10 transition-all duration-300 ease-in-out"
     >
-        <button
-            class="pointer-events-auto cursor-pointer hover:bg-gray-200 p-1 rounded"
-        >
+        <Button variant="navigation">
             <div class="flex flex-row">
                 <img src="/menu.svg" alt="menu" />
                 <span>Categorieen</span>
             </div>
-        </button>
-        <button
-            class="pointer-events-auto cursor-pointer hover:bg-gray-200 p-1 rounded"
-        >
+        </Button>
+        <Button variant="navigation">
             <span>Aanbiedingen</span>
-        </button>
-        <button
-            class="pointer-events-auto cursor-pointer hover:bg-gray-200 p-1 rounded"
-        >
+        </Button>
+        <Button variant="navigation">
             <span>Laptops</span>
-        </button>
-        <button
-            class="pointer-events-auto cursor-pointer hover:bg-gray-200 p-1 rounded"
-        >
+        </Button>
+        <Button variant="navigation">
             <span>Desktops</span>
-        </button>
-        <button
-            class="pointer-events-auto cursor-pointer hover:bg-gray-200 p-1 rounded"
-        >
+        </Button>
+        <Button variant="navigation">
             <span>Tweede Kans</span>
-        </button>
-        <button
-            class="pointer-events-auto cursor-pointer hover:bg-gray-200 p-1 rounded"
-        >
+        </Button>
+        <Button variant="navigation">
             <span>Mobiel</span>
-        </button>
+        </Button>
     </div>
 </nav>

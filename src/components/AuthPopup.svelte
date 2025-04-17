@@ -134,7 +134,7 @@
     });
 </script>
 
-<Popup title={isLogin ? "Inloggen" : "Registreren"} {isOpen} {onClose}>
+<Popup title={isLogin ? "Inloggen" : "Registreren"} {isOpen} {onClose} errorMessage={errorMessage}>
     <!-- Form -->
     <form onsubmit={handleSubmit} class="space-y-4">
         {#if !isLogin}

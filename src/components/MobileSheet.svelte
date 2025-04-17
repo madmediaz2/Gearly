@@ -3,37 +3,17 @@
     import AuthPopup from "./AuthPopup.svelte";
     import { logout, user } from "$lib/stores/authStore";
     import AccountPopup from "./AccountPopup.svelte";
+    import {type PopupControls } from "$lib/types/popupTypes";
+    import CartPopup from "./CartPopup.svelte";
 
     interface Props {
         sheetOpen: boolean;
         toggleSheet: () => void;
+        popupControls: PopupControls;
+        onLogout: () => void;
     }
 
-    const { sheetOpen, toggleSheet }: Props = $props();
-
-    let authPopupOpen = $state(false);
-    let accountPopUpOpen = $state(false);
-
-    function toggleAuthPopup() {
-        authPopupOpen = !authPopupOpen;
-    }
-
-    function closeAuthPopup() {
-        authPopupOpen = false;
-    }
-
-    function toggleAccountPopUp() {
-        accountPopUpOpen = !accountPopUpOpen;
-    }
-
-    function closeAccountPopUp() {
-        accountPopUpOpen = false;
-    }
-
-    function onLogout() {
-        logout();
-        closeAccountPopUp();
-    }
+    const { sheetOpen, toggleSheet, popupControls, onLogout }: Props = $props();
 </script>
 
 {#if sheetOpen}
@@ -122,6 +102,7 @@
                 <div class="border-t border-gray-200 py-4 px-4 mt-auto">
                     <button
                         class="w-full flex items-center py-3 px-2 text-left hover:bg-gray-100 rounded-md"
+                        onclick={popupControls.toggleCartPopUp}
                     >
                         <img
                             src="/shopping_cart.svg"
@@ -130,11 +111,12 @@
                         />
                         <span>Winkelwagen</span>
                     </button>
+                    <CartPopup isOpen={popupControls.cartPopupOpen} onClose={popupControls.closeCartPopUp} />
 
-                    {#if !user}
+                    {#if !$user}
                         <button
                             class="w-full flex items-center py-3 px-2 text-left hover:bg-gray-100 rounded-md"
-                            onclick={toggleAuthPopup}
+                            onclick={popupControls.toggleAuthPopup}
                         >
                             <img
                                 src="/avatar.svg"
@@ -144,13 +126,13 @@
                             <span>Inloggen</span>
                         </button>
                         <AuthPopup
-                            isOpen={authPopupOpen}
-                            onClose={closeAuthPopup}
+                            isOpen={popupControls.authPopupOpen}
+                            onClose={popupControls.closeAuthPopup}
                         />
                     {:else}
                         <button
                             class="w-full flex items-center py-3 px-2 text-left hover:bg-gray-100 rounded-md"
-                            onclick={toggleAccountPopUp}
+                            onclick={popupControls.toggleAccountPopUp}
                         >
                             <img
                                 src="/avatar.svg"
@@ -160,9 +142,9 @@
                             <span>Account Centrum</span>
                         </button>
                         <AccountPopup
-                            isOpen={accountPopUpOpen}
-                            onClose={closeAccountPopUp}
-                            onLogout={onLogout}
+                            isOpen={popupControls.accountPopUpOpen}
+                            onClose={popupControls.closeAccountPopUp}
+                            {onLogout}
                         />
                     {/if}
                 </div>

@@ -2,25 +2,28 @@
     import { browser } from "$app/environment";
     import AuthPopup from "./AuthPopup.svelte";
     import MobileSheet from "./MobileSheet.svelte";
-    import SearchBar from "./ui/SearchBar.svelte";
-    import { user, getUsername, logout } from "$lib/stores/authStore";
-	import AccountPopup from "./AccountPopup.svelte";
+    import SearchBar from "./SearchBar.svelte";
+    import { user, logout } from "$lib/stores/authStore";
+    import AccountPopup from "./AccountPopup.svelte";
+    import CartPopup from "./CartPopup.svelte";
+    import { type PopupControls } from "$lib/types/popupTypes";
 
     let searchQuery = $state("");
     let sheetOpen = $state(false);
     let authPopupOpen = $state(false);
     let accountPopUpOpen = $state(false);
+    let cartPopupOpen = $state(false);
 
     function toggleSheet() {
         sheetOpen = !sheetOpen;
-		closeAuthPopup()
-		closeAccountPopUp()
+        closeAuthPopup();
+        closeAccountPopUp();
     }
 
-	function onLogout(){
-		logout();
+    function onLogout() {
+        logout();
         closeAccountPopUp();
-	}
+    }
 
     function toggleAuthPopup() {
         authPopupOpen = !authPopupOpen;
@@ -38,13 +41,41 @@
         accountPopUpOpen = false;
     }
 
+    function toggleCartPopUp() {
+        cartPopupOpen = !cartPopupOpen;
+    }
+
+    function closeCartPopUp() {
+        cartPopupOpen = false;
+    }
+
+    const popupControls: PopupControls = {
+        get authPopupOpen() {
+            return authPopupOpen;
+        },
+        get accountPopUpOpen() {
+            return accountPopUpOpen;
+        },
+        get cartPopupOpen() {
+            return cartPopupOpen;
+        },
+        toggleAuthPopup,
+        closeAuthPopup,
+        toggleAccountPopUp,
+        closeAccountPopUp,
+        toggleCartPopUp,
+        closeCartPopUp,
+    };
+
     $effect(() => {
         if (browser) {
             const handleResize = () => {
                 if (window.innerWidth > 640) {
+                    closeAccountPopUp();
+                    closeAuthPopup();
+                    closeCartPopUp();
+                    TransitionEvent.apply;
                     sheetOpen = false;
-					closeAccountPopUp()
-					closeAuthPopup()
                 }
             };
 
@@ -84,12 +115,12 @@
             </button>
         </div>
 
-        <!-- Mobile Sheet Component -->
-        <MobileSheet {sheetOpen} {toggleSheet} />
+        <MobileSheet {sheetOpen} {toggleSheet} {popupControls} {onLogout} />
 
         <!-- Right section Shopping Icon & Account Avatar -->
         <div class="hidden sm:flex items-centery79 flex-row gap-3 pl-3">
-            <button class="cursor-pointer">
+            <CartPopup isOpen={cartPopupOpen} onClose={closeCartPopUp} />
+            <button class="cursor-pointer" onclick={toggleCartPopUp}>
                 <img
                     src="/shopping_cart.svg"
                     alt="Shopping Cart"
@@ -106,7 +137,11 @@
                     />
                 </button>
             {:else}
-				<AccountPopup isOpen={accountPopUpOpen} onClose={closeAccountPopUp} onLogout={onLogout} />
+                <AccountPopup
+                    isOpen={accountPopUpOpen}
+                    onClose={closeAccountPopUp}
+                    {onLogout}
+                />
                 <button class="cursor-pointer" onclick={toggleAccountPopUp}>
                     <img
                         src="/avatar.svg"

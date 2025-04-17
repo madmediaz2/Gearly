@@ -189,7 +189,8 @@
             <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-black text-white py-2 px-4 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                variant="primary"
+				className="w-full"
             >
                 {#if isLoading}
                     <span>Bezig...</span>
@@ -205,6 +206,7 @@
         <Button
             type="button"
             variant="social"
+			className="w-full"
             onclick={handleGoogleLogin}
             disabled={isLoading}
         >

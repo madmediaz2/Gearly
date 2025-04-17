@@ -1,15 +1,13 @@
 <script lang="ts">
 	import Button from "./ui/Button.svelte";
+	import type { CartItem } from "$lib/stores/cart";
 
 	interface Props {
-		image: string;
-		brand: string;
-		name: string;
-		price: number;
+		cartItem: Partial<CartItem>
 		onAddToCart: () => void;
 	}
 
-	let { image, brand, name, price, onAddToCart }: Props = $props();
+	let { cartItem, onAddToCart }: Props = $props();
 </script>
 
 <article class="border border-gray-200 rounded-lg overflow-hidden w-3xs flex flex-col bg-white shadow-md">

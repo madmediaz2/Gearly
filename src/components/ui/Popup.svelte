@@ -2,6 +2,7 @@
     import { browser } from "$app/environment";
     import { fly } from "svelte/transition";
     import { type Snippet } from "svelte";
+    import Button from "./Button.svelte";
 
 
     interface Props {
@@ -75,8 +76,8 @@
                         {title}
                     </h2>
                     <!-- svelte-ignore a11y_consider_explicit_label -->
-                    <button
-                        class="text-gray-500 hover:text-gray-700 pointer-events-auto cursor-pointer"
+                    <Button
+                        variant="icon"
                         onclick={onClose}
                         disabled={isLoading}
                     >
@@ -93,7 +94,7 @@
                                 d="M6 18L18 6M6 6l12 12"
                             />
                         </svg>
-                    </button>
+                    </Button>
                 </div>
                 {#if errorMessage}
                     <div class="mb-4 p-3 bg-red-100 text-red-700 rounded-md">

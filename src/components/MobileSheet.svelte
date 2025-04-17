@@ -3,8 +3,9 @@
     import AuthPopup from "./AuthPopup.svelte";
     import { logout, user } from "$lib/stores/authStore";
     import AccountPopup from "./AccountPopup.svelte";
-    import {type PopupControls } from "$lib/types/popupTypes";
+    import { type PopupControls } from "$lib/types/popupTypes";
     import CartPopup from "./CartPopup.svelte";
+    import Button from "./ui/Button.svelte";
 
     interface Props {
         sheetOpen: boolean;
@@ -44,9 +45,9 @@
                         />
                         <span class="ml-2 text-xl font-medium">Gearly</span>
                     </div>
-                    <!-- svelte-ignore a11y_consider_explicit_label -->
-                    <button
-                        class="rounded-md text-gray-500 hover:bg-gray-100 p-2"
+                    <Button
+                        variant="icon"
+                        className="rounded-md text-gray-500 hover:bg-gray-100 p-2"
                         onclick={toggleSheet}
                     >
                         <svg
@@ -62,46 +63,34 @@
                                 d="M6 18L18 6M6 6l12 12"
                             />
                         </svg>
-                    </button>
+                    </Button>
                 </div>
                 <!-- Navigation Links -->
                 <div class="py-2 px-4 grow">
-                    <button
-                        class="w-full flex items-center py-3 px-2 text-left hover:bg-gray-100 rounded-md"
-                    >
+                    <Button variant="mobile-nav">
                         <img src="/menu.svg" alt="menu" class="mr-2" />
                         <span>Categorieen</span>
-                    </button>
-                    <button
-                        class="w-full flex items-center py-3 px-2 text-left hover:bg-gray-100 rounded-md"
-                    >
+                    </Button>
+                    <Button variant="mobile-nav">
                         <span>Aanbiedingen</span>
-                    </button>
-                    <button
-                        class="w-full flex items-center py-3 px-2 text-left hover:bg-gray-100 rounded-md"
-                    >
+                    </Button>
+                    <Button variant="mobile-nav">
                         <span>Laptops</span>
-                    </button>
-                    <button
-                        class="w-full flex items-center py-3 px-2 text-left hover:bg-gray-100 rounded-md"
-                    >
+                    </Button>
+                    <Button variant="mobile-nav">
                         <span>Desktops</span>
-                    </button>
-                    <button
-                        class="w-full flex items-center py-3 px-2 text-left hover:bg-gray-100 rounded-md"
-                    >
+                    </Button>
+                    <Button variant="mobile-nav">
                         <span>Mobiel</span>
-                    </button>
-                    <button
-                        class="w-full flex items-center py-3 px-2 text-left hover:bg-gray-100 rounded-md"
-                    >
+                    </Button>
+                    <Button variant="mobile-nav">
                         <span>Tweede Kans</span>
-                    </button>
+                    </Button>
                 </div>
                 <!-- User Actions -->
                 <div class="border-t border-gray-200 py-4 px-4 mt-auto">
-                    <button
-                        class="w-full flex items-center py-3 px-2 text-left hover:bg-gray-100 rounded-md"
+                    <Button
+                        variant="mobile-nav"
                         onclick={popupControls.toggleCartPopUp}
                     >
                         <img
@@ -110,12 +99,15 @@
                             class="w-6 h-6 mr-2"
                         />
                         <span>Winkelwagen</span>
-                    </button>
-                    <CartPopup isOpen={popupControls.cartPopupOpen} onClose={popupControls.closeCartPopUp} />
+                    </Button>
+                    <CartPopup
+                        isOpen={popupControls.cartPopupOpen}
+                        onClose={popupControls.closeCartPopUp}
+                    />
 
                     {#if !$user}
-                        <button
-                            class="w-full flex items-center py-3 px-2 text-left hover:bg-gray-100 rounded-md"
+                        <Button
+                            variant="mobile-nav"
                             onclick={popupControls.toggleAuthPopup}
                         >
                             <img
@@ -124,14 +116,14 @@
                                 class="w-6 h-6 mr-2"
                             />
                             <span>Inloggen</span>
-                        </button>
+                        </Button>
                         <AuthPopup
                             isOpen={popupControls.authPopupOpen}
                             onClose={popupControls.closeAuthPopup}
                         />
                     {:else}
-                        <button
-                            class="w-full flex items-center py-3 px-2 text-left hover:bg-gray-100 rounded-md"
+                        <Button
+                            variant="mobile-nav"
                             onclick={popupControls.toggleAccountPopUp}
                         >
                             <img
@@ -140,7 +132,7 @@
                                 class="w-6 h-6 mr-2"
                             />
                             <span>Account Centrum</span>
-                        </button>
+                        </Button>
                         <AccountPopup
                             isOpen={popupControls.accountPopUpOpen}
                             onClose={popupControls.closeAccountPopUp}

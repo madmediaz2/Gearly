@@ -49,6 +49,8 @@
 		"@oslojs/encoding": "^1.1.0",
 		"@supabase/supabase-js": "^2.49.4",
 		"drizzle-orm": "^0.40.0",
+		"install": "^0.13.0",
+		"npm": "^10.9.2",
 		"postgres": "^3.4.5"
 	}
 }

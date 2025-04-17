@@ -4,6 +4,7 @@
     import { supabase } from "$lib/supabaseClient";
     import { user, updateUser } from "$lib/stores/authStore";
     import Popup from "./ui/Popup.svelte";
+    import Button from "./ui/Button.svelte";
 
     interface Props {
         isOpen: boolean;
@@ -185,25 +186,25 @@
         </div>
 
         <div>
-            <button
+            <Button
                 type="submit"
-                class="w-full bg-black text-white py-2 px-4 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 pointer-events-auto cursor-pointer disabled:opacity-50"
                 disabled={isLoading}
+                className="w-full bg-black text-white py-2 px-4 rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500"
             >
                 {#if isLoading}
                     <span>Bezig...</span>
                 {:else}
                     {isLogin ? "Inloggen" : "Registreren"}
                 {/if}
-            </button>
+            </Button>
         </div>
     </form>
 
     <!-- Google Login -->
     <div class="mt-4">
-        <button
+        <Button
             type="button"
-            class="w-full flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black pointer-events-auto cursor-pointer disabled:opacity-50"
+            variant="social"
             onclick={handleGoogleLogin}
             disabled={isLoading}
         >
@@ -213,20 +214,21 @@
                 class="h-5 w-5 mr-2"
             />
             Doorgaan met Google
-        </button>
+        </Button>
     </div>
 
     <!-- Toggle View -->
     <div class="mt-4 text-center">
-        <button
+        <Button
             type="button"
-            class="text-sm text-gray-600 hover:text-gray-900"
+            variant="link"
+            size="sm"
             onclick={toggleView}
             disabled={isLoading}
         >
             {isLogin
                 ? "Nog geen account? Registreer hier"
                 : "Heb je al een account? Log in"}
-        </button>
+        </Button>
     </div>
 </Popup>

@@ -1,4 +1,6 @@
 <script lang="ts">
+    import Button from "./ui/Button.svelte";
+
   export let searchQuery = "";
 </script>
 
@@ -36,10 +38,11 @@
       required
       bind:value={searchQuery}
     />
-    <button
+    <Button
       type="submit"
-      class="text-white absolute end-1 bottom-[0.3rem] sm:end-2.5 sm:bottom-2.5 bg-black hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-2 py-2"
-      >Zoeken</button
+      variant="default"
+      className="text-white absolute end-1 bottom-[0.3rem] sm:end-2.5 sm:bottom-2.5 bg-black hover:bg-gray-900 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-2 py-2"
+      >Zoeken</Button
     >
   </div>
 </form>

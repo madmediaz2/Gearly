@@ -152,7 +152,7 @@
     </div>
 
     <!-- Bottom Section -->
-    <div
+    <nav
         class="hidden sm:flex items-center justify-between flex-row bg-gray-100 p-1 border-b border-gray-300 px-10 transition-all duration-300 ease-in-out"
     >
         <Button variant="navigation">
@@ -176,5 +176,5 @@
         <Button variant="navigation">
             <span>Mobiel</span>
         </Button>
-    </div>
+    </nav>
 </nav>

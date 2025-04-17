@@ -92,7 +92,7 @@
 
 <nav class="flex flex-col">
     <div
-        class="sm:flex-row flex items-center justify-between flex-row-reverse bg-gray-100 p-4 border-b border-gray-300"
+        class="sm:flex-row flex items-center justify-between flex-row-reverse bg-gray-100 p-2 border-b border-gray-300"
     >
         <!-- Left section (e.g., settings icon) -->
         <div class="flex items-center ml-3 sm:pr-3">

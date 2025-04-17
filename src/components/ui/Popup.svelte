@@ -10,9 +10,10 @@
         isOpen: boolean;
         onClose: () => void;
         errorMessage?: string;
+        titleSeperator?: boolean;
     }
 
-    const { children, title, isOpen, onClose, errorMessage }: Props = $props();
+    const { children, title, isOpen, onClose, errorMessage, titleSeperator=false }: Props = $props();
 
     let isSmallScreen: boolean = $state(false);
     let isLoading: boolean = $state(false);
@@ -61,7 +62,7 @@
     >
         <!-- Overlay --><!-- svelte-ignore a11y_no_static_element_interactions --><!-- svelte-ignore a11y_click_events_have_key_events -->
         <div
-            class="absolute inset-0 opacity-60 blur-sm sm:opacity-100 sm:blur-3xl bg-gray-100 transition-opacity"
+            class="absolute inset-0 opacity-60 blur-sm sm:opacity-60 sm:blur-3xl bg-gray-100 transition-opacity"
             onclick={onClose}
         ></div>
 
@@ -70,8 +71,8 @@
             class="fixed bottom-0 sm:absolute sm:bottom-auto sm:top-20 right-0 sm:right-8 w-full max-w-md bg-white rounded-lg shadow-lg transform transition-all"
         >
             <div class="p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-bold">
+                <div class="flex items-center justify-between mb-4 {titleSeperator ?? 'border-b border-gray-200'}">
+                    <h2 class="text-xl font-bold pb-2">
                         {title}
                     </h2>
                     <!-- svelte-ignore a11y_consider_explicit_label -->

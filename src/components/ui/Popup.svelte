@@ -4,7 +4,6 @@
     import { type Snippet } from "svelte";
     import Button from "./Button.svelte";
 
-
     interface Props {
         children: Snippet ;
         title: string;

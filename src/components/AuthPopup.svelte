@@ -65,7 +65,6 @@
 
                 // Update the user store
                 updateUser(data.user);
-                console.log("Login successful");
                 onClose();
             } else {
                 // Sign up with email and password

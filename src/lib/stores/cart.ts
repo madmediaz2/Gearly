@@ -1,11 +1,13 @@
 import { writable } from 'svelte/store';
 
 export interface CartItem {
-    id: string; // Or number, depending on your product ID type
+    id: number; 
     name: string;
     price: number;
     quantity: number;
-    // Add other relevant properties like image, variant, etc.
+    image: string;
+    brand: string;
+    variant?: string;
 }
 
 // Initialize the store with an empty array
@@ -26,11 +28,11 @@ export function addToCart(item: Omit<CartItem, 'quantity'>, quantity: number = 1
     });
 }
 
-export function removeFromCart(itemId: string) {
+export function removeFromCart(itemId: number) {
     cart.update(items => items.filter(item => item.id !== itemId));
 }
 
-export function updateQuantity(itemId: string, newQuantity: number) {
+export function updateQuantity(itemId: number, newQuantity: number) {
     cart.update(items => {
         const itemIndex = items.findIndex(i => i.id === itemId);
         if (itemIndex > -1) {

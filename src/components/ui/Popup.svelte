@@ -5,7 +5,7 @@
     import Button from "./Button.svelte";
 
     interface Props {
-        children: Snippet ;
+        children: Snippet;
         title: string;
         isOpen: boolean;
         onClose: () => void;
@@ -13,7 +13,7 @@
         titleSeperator?: boolean;
     }
 
-    const { children, title, isOpen, onClose, errorMessage, titleSeperator=false }: Props = $props();
+    const { children, title, isOpen, onClose, errorMessage, titleSeperator }: Props = $props();
 
     let isSmallScreen: boolean = $state(false);
     let isLoading: boolean = $state(false);
@@ -70,14 +70,15 @@
         <div
             class="fixed bottom-0 sm:absolute sm:bottom-auto sm:top-20 right-0 sm:right-8 w-full max-w-md bg-white rounded-lg shadow-lg transform transition-all"
         >
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-4 {titleSeperator ?? 'border-b border-gray-200'}">
+            <div class="p-5">
+                <div class="flex items-center justify-between mb-4 {titleSeperator && 'border-b border-gray-200'}">
                     <h2 class="text-xl font-bold pb-2">
                         {title}
                     </h2>
                     <!-- svelte-ignore a11y_consider_explicit_label -->
                     <Button
                         variant="icon"
+                        className="rounded-md text-gray-500 hover:bg-gray-100 p-2 mb-1"
                         onclick={onClose}
                         disabled={isLoading}
                     >

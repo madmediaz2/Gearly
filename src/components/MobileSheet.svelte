@@ -66,7 +66,7 @@
                     </Button>
                 </div>
                 <!-- Navigation Links -->
-                <div class="py-2 px-4 grow">
+                <nav class="py-2 px-4 grow">
                     <Button variant="mobile-nav">
                         <img src="/menu.svg" alt="menu" class="mr-2" />
                         <span>Categorieen</span>
@@ -86,7 +86,7 @@
                     <Button variant="mobile-nav">
                         <span>Tweede Kans</span>
                     </Button>
-                </div>
+                </nav>
                 <!-- User Actions -->
                 <div class="border-t border-gray-200 py-4 px-4 mt-auto">
                     <Button

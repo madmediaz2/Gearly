@@ -40,9 +40,9 @@ user.subscribe(async (currentUser) => {
             
             // Transform database items to match ProductItem interface
             const cartItems = dbCart.map(item => ({
-                id: item.id || item.product_id, // Use id from database or fallback to product_id
+                id: item.id || item.id, // Use id from database or fallback to product_id
                 cart_id: item.cart_id,
-                product_id: item.product_id,
+                product_id: item.id,
                 name: item.name || '',
                 price: item.price || 0,
                 quantity: item.quantity || 1,
@@ -83,7 +83,7 @@ export async function addToCart(item: Omit<ProductItem, 'quantity'>, quantity: n
     
     // Update local cart state immediately for responsive UI
     cart.update(items => {
-        const existingItemIndex = items.findIndex(i => i.product_id === item.product_id);
+        const existingItemIndex = items.findIndex(i => i.id === item.id);
         if (existingItemIndex > -1) {
             // Item exists, update quantity
             items[existingItemIndex].quantity += quantity;
@@ -99,7 +99,7 @@ export async function addToCart(item: Omit<ProductItem, 'quantity'>, quantity: n
         try {
             await addItemToCart(
                 currentUser.id,
-                item.product_id,
+                item.id,
                 quantity,
                 item.variant as string
             );
@@ -117,7 +117,7 @@ export async function removeFromCart(itemId: number) {
     cartError.set(null);
     
     // Update local cart state immediately
-    cart.update(items => items.filter(item => item.product_id !== itemId));
+    cart.update(items => items.filter(item => item.id !== itemId));
     
     // If user is logged in, sync with database
     if (currentUser) {
@@ -143,7 +143,7 @@ export async function updateQuantity(itemId: number, newQuantity: number) {
     
     // Update local cart state immediately
     cart.update(items => {
-        const itemIndex = items.findIndex(i => i.product_id === itemId);
+        const itemIndex = items.findIndex(i => i.id === itemId);
         if (itemIndex > -1) {
             if (newQuantity <= 0) {
                 // Remove item if quantity is zero or less
@@ -190,7 +190,7 @@ export async function clearCart() {
             for (const item of items) {
                 await addItemToCart(
                     currentUser.id,
-                    item.product_id,
+                    item.id,
                     0
                 );
             }

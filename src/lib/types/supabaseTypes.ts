@@ -40,7 +40,6 @@ export interface ProductItem{
 	sku: string;
 	stock: number;
 	cart_id?: string;
-	product_id: number;
 	variant: string | null;
 }
 

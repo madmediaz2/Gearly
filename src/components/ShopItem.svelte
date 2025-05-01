@@ -1,15 +1,11 @@
 <script lang="ts">
     import type { ProductItem } from "$lib/types/supabaseTypes";
+    import { capitalizeFirstLetter } from "$lib/utils";
     import Button from "./ui/Button.svelte";
 
     interface Props {
         cartItem: ProductItem;
         onAddToCart: () => void;
-    }
-
-    function capitalizeFirstLetter(str: string | null | undefined): string {
-        if (!str) return "";
-        return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
     function handleAddToCart(e: Event){

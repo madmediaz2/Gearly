@@ -5,6 +5,7 @@
     import { cart } from "../lib/stores/cart";
     import { browser } from "$app/environment";
     import { updateQuantity, clearCart, cartError, isCartLoading } from "../lib/stores/cart";
+    import { capitalizeFirstLetter } from "../lib/utils";
 
     interface Props {
         isOpen: boolean;
@@ -74,10 +75,6 @@
         }
     });
 
-    function capitalizeFirstLetter(str: string | undefined): string {
-        if (!str) return "";
-        return str.charAt(0).toUpperCase() + str.slice(1);
-    }
 </script>
 
 <Popup title="Winkelwagen" isOpen={isOpen} {onClose} titleSeperator={true} errorMessage={localCartError || undefined}>

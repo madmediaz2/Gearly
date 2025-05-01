@@ -94,7 +94,7 @@
                             {#if item.brand_image}
                                 <img
                                     src={item.brand_image}
-                                    alt={item.brand}
+                                    alt={item.brand_name}
                                     class="max-w-full max-h-full object-contain"
                                 />
                             {:else}

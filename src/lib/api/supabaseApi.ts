@@ -6,7 +6,6 @@ import type { Brand, ProductWithImages, ProductItem } from '../types/supabaseTyp
  * @returns Promise with product data including images and brand info
  */
 export async function fetchShopItems(): Promise<ProductItem[]> {
-	// First get all active products with their images
 	const { data: products, error: productsError } = await supabase
 		.from('products')
 		.select(`
@@ -19,12 +18,10 @@ export async function fetchShopItems(): Promise<ProductItem[]> {
 	if (productsError) throw productsError;
 	if (!products || products.length === 0) return [];
 
-	// Get all brand IDs from the products
 	const brandIds = products
 		.map(p => p.brand_id)
 		.filter((id): id is number => id !== null);
 
-	// If we have brand IDs, fetch the brands
 	let brands: Record<number, Brand> = {};
 	if (brandIds.length > 0) {
 		const { data: brandsData, error: brandsError } = await supabase
@@ -41,7 +38,6 @@ export async function fetchShopItems(): Promise<ProductItem[]> {
 		}, {} as Record<number, Brand>);
 	}
 
-	// Format data to match ProductItem structure
 	return (products as ProductWithImages[]).map(product => {
 		const brand = product.brand_id ? brands[product.brand_id] : null;
 
@@ -58,7 +54,7 @@ export async function fetchShopItems(): Promise<ProductItem[]> {
 			sku: product.sku || '',
 			stock: product.stock,
 			product_id: product.id,
-			variant: null
+			variant: null,
 		};
 	});
 }
@@ -69,7 +65,6 @@ export async function fetchShopItems(): Promise<ProductItem[]> {
  * @returns Promise with cart items
  */
 export async function fetchCartItems(userId: string): Promise<ProductItem[]> {
-	// First get the user's cart
 	const { data: cartData, error: cartError } = await supabase
 		.from('carts')
 		.select('id')
@@ -77,16 +72,13 @@ export async function fetchCartItems(userId: string): Promise<ProductItem[]> {
 		.single();
 
 	if (cartError && cartError.code !== 'PGRST116') {
-		// Not found is okay (we'll create it later)
 		throw cartError;
 	}
 
 	if (!cartData) {
-		// Cart doesn't exist yet
 		return [];
 	}
 
-	// Then get the cart items using the cart_item_view
 	const { data, error } = await supabase
 		.from('cart_item_view')
 		.select('*')
@@ -110,7 +102,6 @@ export async function addItemToCart(
 	quantity: number = 1,
 	variant?: string
 ) {
-	// First ensure the user has a cart
 	let cartId: string;
 
 	const { data: cartData, error: cartError } = await supabase
@@ -120,7 +111,6 @@ export async function addItemToCart(
 		.single();
 
 	if (cartError && cartError.code === 'PGRST116') {
-		// Cart not found, create one
 		const { data: newCart, error: createError } = await supabase
 			.from('carts')
 			.insert([{ user_id: userId }])
@@ -135,7 +125,6 @@ export async function addItemToCart(
 		cartId = cartData.id;
 	}
 
-	// Now add the item to the cart
 	const { error: addError } = await supabase
 		.from('cart_items')
 		.upsert([
@@ -152,6 +141,35 @@ export async function addItemToCart(
 		});
 
 	if (addError) throw addError;
+
+	return { success: true };
+}
+
+/**
+ * Clears all items from the user's cart
+ * @param userId The authenticated user's ID
+ * @returns Promise with operation result
+ */
+export async function clearCart(userId: string) {
+	const { data: cartData, error: cartError } = await supabase
+		.from('carts')
+		.select('id')
+		.eq('user_id', userId)
+		.single();
+
+	if (cartError && cartError.code === 'PGRST116') {
+		return { success: true };
+	} else if (cartError) {
+		throw cartError;
+	}
+
+	// Delete all items from the cart
+	const { error: deleteError } = await supabase
+		.from('cart_items')
+		.delete()
+		.eq('cart_id', cartData.id);
+
+	if (deleteError) throw deleteError;
 
 	return { success: true };
 }

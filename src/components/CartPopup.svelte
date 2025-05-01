@@ -4,6 +4,7 @@
     import Input from "./ui/Input.svelte";
     import { cart } from "../lib/stores/cart";
     import { browser } from "$app/environment";
+    import { updateQuantity, clearCart, cartError, isCartLoading } from "../lib/stores/cart";
 
     interface Props {
         isOpen: boolean;
@@ -12,26 +13,33 @@
 
     const { isOpen, onClose }: Props = $props();
 
-    function increaseQuantity(id: number) {
-        $cart = $cart.map((item) =>
-            item.id === id
-                ? { ...item, quantity: (item.quantity || 1) + 1 }
-                : item,
-        );
+    let cartIsLoading = $state(false);
+    let localCartError = $state<string | null>(null);
+
+    // Subscribe to the loading and error states
+    $effect(() => {
+        cartIsLoading = $isCartLoading;
+        localCartError = $cartError;
+    });
+
+    async function increaseQuantity(id: number) {
+        const item = $cart.find(item => item.id === id);
+        if (item) {
+            const newQuantity = (item.quantity || 1) + 1;
+            await updateQuantity(id, newQuantity);
+        }
     }
 
-    function decreaseQuantity(id: number) {
-        const updatedCart = $cart.map((item) =>
-            item.id === id
-                ? { ...item, quantity: (item.quantity || 1) - 1 }
-                : item,
-        );
-
-        $cart = updatedCart.filter((item) => item.quantity > 0);
+    async function decreaseQuantity(id: number) {
+        const item = $cart.find(item => item.id === id);
+        if (item) {
+            const newQuantity = (item.quantity || 1) - 1;
+            await updateQuantity(id, newQuantity);
+        }
     }
 
-    function emptyCart() {
-        $cart = [];
+    async function emptyCart() {
+        await clearCart();
     }
 
     let totalPrice = $state(0);
@@ -83,14 +91,14 @@
                         <div
                             class="w-16 h-16 bg-gray-100 flex items-center justify-center mr-4 rounded"
                         >
-                            {#if item.brandImage}
+                            {#if item.brand_image}
                                 <img
-                                    src={item.brandImage}
+                                    src={item.brand_image}
                                     alt={item.brand}
                                     class="max-w-full max-h-full object-contain"
                                 />
                             {:else}
-                                <span>[Brand Logo]</span>
+                                <span>Brand Logo</span>
                             {/if}
                         </div>
                     {/if}
@@ -150,7 +158,7 @@
                     class="text-xl sm:text-2xl font-bold mt-2 sm:mt-0"
                     aria-label="Totaal bedrag"
                 >
-                    {#if isSmallScreen}Totaal:{/if}€{totalPrice.toFixed(2)}
+                    <span>{#if isSmallScreen}Totaal:{/if}€{totalPrice.toFixed(2)}</span>
                 </output>
             </div>
         </section>

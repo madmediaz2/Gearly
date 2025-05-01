@@ -1,7 +1,7 @@
 import { writable, get } from 'svelte/store';
 import { user } from './authStore';
 import { browser } from '$app/environment';
-import { addItemToCart, fetchCartItems } from '$lib/supabaseClient';
+import { addItemToCart, fetchCartItems, clearCart as clearCartDB } from '$lib/api/supabaseApi';
 import type { ProductItem } from '$lib/types/supabaseTypes';
 
 
@@ -159,18 +159,13 @@ export async function clearCart() {
     
     cartError.set(null);
     
+    // Clear cart in store
     cart.set([]);
     
     if (currentUser) {
         try {
-            const items = get(cart);
-            for (const item of items) {
-                await addItemToCart(
-                    currentUser.id,
-                    item.id,
-                    0
-                );
-            }
+            // Use the clearCart function from supabaseApi to remove all items at once
+            await clearCartDB(currentUser.id);
         } catch (error) {
             console.error('Error clearing cart in database:', error);
             cartError.set('Failed to clear your cart');

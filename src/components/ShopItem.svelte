@@ -17,7 +17,7 @@
     let { cartItem, onAddToCart }: Props = $props();
 </script>
 
-<a href="/ui-map">
+<a href={`/products/${cartItem.id}`}>
     <article
         class="border border-gray-200 rounded-lg overflow-hidden w-3xs flex flex-col bg-white shadow-md pointer-events-auto cursor-pointer"
     >

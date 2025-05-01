@@ -35,12 +35,8 @@ user.subscribe(async (currentUser) => {
             cartError.set(null);
             const dbCart = await fetchCartItems(currentUser.id);
             
-            // fetchCartItems will return an empty array if cart doesn't exist
-            // we don't need any special handling for this case as it's expected
-            
-            // Transform database items to match ProductItem interface
             const cartItems = dbCart.map(item => ({
-                id: item.id || item.id, // Use id from database or fallback to product_id
+                id: item.id ,
                 cart_id: item.cart_id,
                 product_id: item.id,
                 name: item.name || '',
@@ -50,7 +46,6 @@ user.subscribe(async (currentUser) => {
                 brand_name: item.brand_name || '',
                 brand_image: item.brand_image || '',
                 variant: item.variant,
-                // Add required ProductItem properties
                 image: item.image_url || '',
                 description: '',
                 sku: '',
@@ -78,23 +73,18 @@ user.subscribe(async (currentUser) => {
 export async function addToCart(item: Omit<ProductItem, 'quantity'>, quantity: number = 1) {
     const currentUser = get(user);
     
-    // Clear any previous errors
     cartError.set(null);
     
-    // Update local cart state immediately for responsive UI
     cart.update(items => {
         const existingItemIndex = items.findIndex(i => i.id === item.id);
         if (existingItemIndex > -1) {
-            // Item exists, update quantity
             items[existingItemIndex].quantity += quantity;
         } else {
-            // Add new item
             items.push({ ...item, quantity });
         }
         return items;
     });
     
-    // If user is logged in, sync with database
     if (currentUser) {
         try {
             await addItemToCart(
@@ -113,16 +103,12 @@ export async function addToCart(item: Omit<ProductItem, 'quantity'>, quantity: n
 export async function removeFromCart(itemId: number) {
     const currentUser = get(user);
     
-    // Clear any previous errors
     cartError.set(null);
     
-    // Update local cart state immediately
     cart.update(items => items.filter(item => item.id !== itemId));
     
-    // If user is logged in, sync with database
     if (currentUser) {
         try {
-            // Using 0 quantity as a way to remove the item
             await addItemToCart(
                 currentUser.id,
                 itemId,
@@ -138,15 +124,12 @@ export async function removeFromCart(itemId: number) {
 export async function updateQuantity(itemId: number, newQuantity: number) {
     const currentUser = get(user);
     
-    // Clear any previous errors
     cartError.set(null);
     
-    // Update local cart state immediately
     cart.update(items => {
         const itemIndex = items.findIndex(i => i.id === itemId);
         if (itemIndex > -1) {
             if (newQuantity <= 0) {
-                // Remove item if quantity is zero or less
                 items.splice(itemIndex, 1);
             } else {
                 items[itemIndex].quantity = newQuantity;
@@ -155,7 +138,6 @@ export async function updateQuantity(itemId: number, newQuantity: number) {
         return items;
     });
     
-    // If user is logged in, sync with database
     if (currentUser) {
         try {
             await addItemToCart(
@@ -175,17 +157,12 @@ export async function updateQuantity(itemId: number, newQuantity: number) {
 export async function clearCart() {
     const currentUser = get(user);
     
-    // Clear any previous errors
     cartError.set(null);
     
-    // Clear local cart state
     cart.set([]);
     
-    // If user is logged in, clear in database
     if (currentUser) {
         try {
-            // This requires a new backend function, but for now we'll handle it client-side
-            // by removing each item one by one
             const items = get(cart);
             for (const item of items) {
                 await addItemToCart(

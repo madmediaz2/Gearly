@@ -26,8 +26,7 @@ export type ProductWithImages = {
 	product_images: ProductImage[];
 }
 
-
-export interface ProductItem{
+export interface ProductItem {
 	id: number;
 	name: string;
 	price: number;
@@ -43,5 +42,5 @@ export interface ProductItem{
 	variant: string | null;
 }
 
-export type ShopItem = ProductItem;
-export type CartItem = ProductItem;
+export type ShopItem = Partial<ProductItem>;
+export type CartItem = Partial<ProductItem>;

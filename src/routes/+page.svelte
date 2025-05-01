@@ -1,11 +1,11 @@
 <script lang="ts">
     import ShopItem from "../components/ShopItem.svelte";
     import { cart, addToCart } from "../lib/stores/cart";
-    import type { CartItem } from "$lib/stores/cart";
+    import type { ProductItem } from "$lib/types/supabaseTypes";
     import { fetchShopItems } from "$lib/supabaseClient";
     import { onMount } from "svelte";
 
-    let shopItems = $state<CartItem[]>([]);
+    let shopItems = $state<ProductItem[]>([]);
     let isLoading = $state(true);
     let error = $state<string | null>();
 
@@ -24,7 +24,7 @@
     }
 
     // Add item to cart
-    function onAddToCart(item: CartItem) {
+    function onAddToCart(item: ProductItem) {
         addToCart(item);
     }
 

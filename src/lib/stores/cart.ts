@@ -68,6 +68,9 @@ user.subscribe(async (currentUser) => {
 export async function addToCart(item: Omit<ProductItem, 'quantity'>, quantity: number = 1) {
     const currentUser = get(user);
     
+    // Clear any previous errors
+    cartError.set(null);
+    
     // Update local cart state immediately for responsive UI
     cart.update(items => {
         const existingItemIndex = items.findIndex(i => i.product_id === item.product_id);
@@ -100,6 +103,9 @@ export async function addToCart(item: Omit<ProductItem, 'quantity'>, quantity: n
 export async function removeFromCart(itemId: number) {
     const currentUser = get(user);
     
+    // Clear any previous errors
+    cartError.set(null);
+    
     // Update local cart state immediately
     cart.update(items => items.filter(item => item.product_id !== itemId));
     
@@ -121,6 +127,9 @@ export async function removeFromCart(itemId: number) {
 
 export async function updateQuantity(itemId: number, newQuantity: number) {
     const currentUser = get(user);
+    
+    // Clear any previous errors
+    cartError.set(null);
     
     // Update local cart state immediately
     cart.update(items => {
@@ -153,6 +162,9 @@ export async function updateQuantity(itemId: number, newQuantity: number) {
 
 export async function clearCart() {
     const currentUser = get(user);
+    
+    // Clear any previous errors
+    cartError.set(null);
     
     // Clear local cart state
     cart.set([]);

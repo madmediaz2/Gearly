@@ -15,7 +15,7 @@
 
     let cartIsLoading = $state(false);
     let localCartError = $state<string | null>(null);
-
+    
     // Subscribe to the loading and error states
     $effect(() => {
         cartIsLoading = $isCartLoading;
@@ -80,7 +80,7 @@
     }
 </script>
 
-<Popup title="Winkelwagen" {isOpen} {onClose} titleSeperator={true}>
+<Popup title="Winkelwagen" isOpen={isOpen} {onClose} titleSeperator={true} errorMessage={localCartError || undefined}>
     {#if $cart.length === 0}
         <p>Je winkelwagen is leeg.</p>
     {:else}

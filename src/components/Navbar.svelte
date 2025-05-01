@@ -96,12 +96,14 @@
         class="sm:flex-row flex items-center justify-between flex-row-reverse bg-gray-100 p-2 border-b border-gray-300"
     >
         <!-- Left section (e.g., settings icon) -->
-        <div class="flex items-center ml-3 sm:pr-3">
-            <Button variant="default">
-                <img src="/gearly_logo.svg" alt="Settings" class="w-12 h-12" />
-            </Button>
-            <span class="hidden sm:block pl-1 text-xl">Gearly</span>
-        </div>
+        <a href="/">
+            <div class="flex items-center ml-3 sm:pr-3">
+                <Button variant="default">
+                    <img src="/gearly_logo.svg" alt="Settings" class="w-12 h-12" />
+                </Button>
+                <span class="hidden sm:block pl-1 text-xl">Gearly</span>
+            </div>
+        </a>
 
         <!-- Center section (search input) -->
         <SearchBar bind:searchQuery />

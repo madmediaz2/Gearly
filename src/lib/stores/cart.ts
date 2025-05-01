@@ -35,6 +35,9 @@ user.subscribe(async (currentUser) => {
             cartError.set(null);
             const dbCart = await fetchCartItems(currentUser.id);
             
+            // fetchCartItems will return an empty array if cart doesn't exist
+            // we don't need any special handling for this case as it's expected
+            
             // Transform database items to match ProductItem interface
             const cartItems = dbCart.map(item => ({
                 id: item.id || item.product_id, // Use id from database or fallback to product_id
@@ -56,8 +59,15 @@ user.subscribe(async (currentUser) => {
             
             cart.set(cartItems);
         } catch (error) {
-            console.error('Error loading cart from database:', error);
-            cartError.set('Failed to load your cart from the database');
+            console.log(error)
+            if (!(error instanceof Error && 
+                (error.message.includes('not found') || 
+                 error.message.includes('does not exist')))
+            ) {
+                cartError.set(null); 
+            } else {
+                cartError.set(error.message)
+            }
         } finally {
             isCartLoading.set(false);
         }
@@ -154,8 +164,10 @@ export async function updateQuantity(itemId: number, newQuantity: number) {
                 newQuantity
             );
         } catch (error) {
-            console.error('Error updating quantity in database:', error);
-            cartError.set('Failed to update item quantity');
+            if (newQuantity > 0) {
+                console.error('Error updating quantity in database:', error);
+                cartError.set('Failed to update item quantity');
+            }
         }
     }
 }

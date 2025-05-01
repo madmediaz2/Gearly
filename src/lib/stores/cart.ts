@@ -5,7 +5,6 @@ import { addItemToCart, fetchCartItems, clearCart as clearCartDB } from '$lib/ap
 import type { ProductItem } from '$lib/types/supabaseTypes';
 
 
-// Initialize the store with an empty array
 export const cart = writable<ProductItem[]>([]);
 export const isCartLoading = writable(false);
 export const cartError = writable<string | null>(null);
@@ -164,7 +163,6 @@ export async function clearCart() {
     
     if (currentUser) {
         try {
-            // Use the clearCart function from supabaseApi to remove all items at once
             await clearCartDB(currentUser.id);
         } catch (error) {
             console.error('Error clearing cart in database:', error);

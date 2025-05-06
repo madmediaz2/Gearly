@@ -178,5 +178,10 @@
         <Button variant="navigation">
             <span>Mobiel</span>
         </Button>
+        <Button variant="navigation">
+            <a href="/admin/products" class="text-gray-900 hover:text-gray-700">
+                <span>Admin</span>
+            </a>
+        </Button>
     </nav>
 </nav>

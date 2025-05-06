@@ -10,7 +10,12 @@ export async function fetchShopItems(): Promise<ProductItem[]> {
 		.from('products')
 		.select(`
       *,
-      product_images (*)
+      product_images (*),
+      product_specifications (
+        specification_attribute_id,
+        value,
+        specification_attributes:specification_attribute_id (*)
+      )
     `)
 		.eq('is_active', true)
 		.order('created_at', { ascending: false });
@@ -40,6 +45,20 @@ export async function fetchShopItems(): Promise<ProductItem[]> {
 
 	return (products as ProductWithImages[]).map(product => {
 		const brand = product.brand_id ? brands[product.brand_id] : null;
+		
+		// Process specifications if available
+		const specifications = [];
+		
+		if (product.product_specifications && Array.isArray(product.product_specifications)) {
+			for (const spec of product.product_specifications) {
+				if (spec.specification_attributes && spec.value) {
+					specifications.push({
+						attribute: spec.specification_attributes,
+						value: spec.value
+					});
+				}
+			}
+		}
 
 		return {
 			id: product.id,
@@ -55,6 +74,7 @@ export async function fetchShopItems(): Promise<ProductItem[]> {
 			stock: product.stock,
 			product_id: product.id,
 			variant: null,
+			specifications: specifications.length > 0 ? specifications : undefined,
 		};
 	});
 }
@@ -163,7 +183,6 @@ export async function clearCart(userId: string) {
 		throw cartError;
 	}
 
-	// Delete all items from the cart
 	const { error: deleteError } = await supabase
 		.from('cart_items')
 		.delete()
@@ -184,7 +203,12 @@ export async function fetchProductById(productId: number | string): Promise<Prod
     .from('products')
     .select(`
       *,
-      product_images (*)
+      product_images (*),
+      product_specifications (
+        specification_attribute_id,
+        value,
+        specification_attributes:specification_attribute_id (*)
+      )
     `)
     .eq('id', productId)
     .eq('is_active', true)
@@ -212,6 +236,21 @@ export async function fetchProductById(productId: number | string): Promise<Prod
     if (brandData) brand = brandData;
   }
 
+  // Process specifications if available
+  const specifications = [];
+  
+  if (product.product_specifications && Array.isArray(product.product_specifications)) {
+    for (const spec of product.product_specifications) {
+      // Only add specifications that have attributes and values
+      if (spec.specification_attributes && spec.value) {
+        specifications.push({
+          attribute: spec.specification_attributes,
+          value: spec.value
+        });
+      }
+    }
+  }
+
   return {
     id: product.id,
     name: product.name,
@@ -225,6 +264,129 @@ export async function fetchProductById(productId: number | string): Promise<Prod
     sku: product.sku || '',
     stock: product.stock,
     variant: null,
-    product_images: product.product_images || []
+    product_images: product.product_images || [],
+    specifications: specifications.length > 0 ? specifications : undefined
   };
+}
+
+/**
+ * Creates a new product
+ * @param productData The product data to create
+ * @returns Promise with the created product
+ */
+export async function createProduct(productData: Partial<ProductWithImages>) {
+  const { data, error } = await supabase
+    .from('products')
+    .insert([{
+      name: productData.name,
+      price: productData.price || 0,
+      description: productData.description || '',
+      sku: productData.sku || '',
+      stock: productData.stock || 0,
+      is_active: true,
+      brand_id: productData.brand_id
+    }])
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Updates an existing product
+ * @param id The ID of the product to update
+ * @param productData The updated product data
+ * @returns Promise with the updated product
+ */
+export async function updateProduct(id: number, productData: Partial<ProductWithImages>) {
+  const { data, error } = await supabase
+    .from('products')
+    .update({
+      name: productData.name,
+      price: productData.price,
+      description: productData.description,
+      sku: productData.sku,
+      stock: productData.stock,
+      brand_id: productData.brand_id
+    })
+    .eq('id', id)
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Marks a product as inactive (soft delete)
+ * @param id The ID of the product to delete
+ * @returns Promise with operation result
+ */
+export async function deleteProduct(id: number) {
+  const { error } = await supabase
+    .from('products')
+    .update({ is_active: false })
+    .eq('id', id);
+
+  if (error) throw error;
+  return { success: true };
+}
+
+/**
+ * Creates a product image entry in the database
+ * @param productId The product ID to associate with the image
+ * @param imageUrl The URL of the uploaded image
+ * @param altText Optional alt text for the image
+ * @param position Optional position for image ordering
+ * @returns Promise with the created image data
+ */
+export async function createProductImage(
+  productId: number, 
+  imageUrl: string, 
+  altText?: string, 
+  position: number = 0
+) {
+  const { data, error } = await supabase
+    .from('product_images')
+    .insert([{
+      product_id: productId,
+      url: imageUrl,
+      alt_text: altText || null,
+      position
+    }])
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Deletes a product image
+ * @param imageId The ID of the image to delete
+ * @returns Promise with operation result
+ */
+export async function deleteProductImage(imageId: number) {
+  const { error } = await supabase
+    .from('product_images')
+    .delete()
+    .eq('id', imageId);
+
+  if (error) throw error;
+  return { success: true };
+}
+
+/**
+ * Fetches all brands
+ * @returns Promise with brand data
+ */
+export async function fetchBrands() {
+  const { data, error } = await supabase
+    .from('brands')
+    .select('id, name, image_url')
+    .order('name');
+
+  if (error) throw error;
+  return data || [];
 }

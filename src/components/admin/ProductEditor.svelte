@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { supabase } from "$lib/supabaseClient";
     import type { ProductItem, ProductImage } from "$lib/types/supabaseTypes";
+    import {deleteProduct, deleteProductImage, findBrandIdByName, loadBrands, saveProduct, uploadProductImages} from "$lib/api/productApi";
     import Button from "../ui/Button.svelte";
     import Input from "../ui/Input.svelte";
     import SpecificationsEditor from "./SpecificationsEditor.svelte";
@@ -26,45 +26,33 @@
     );
     
     $effect(() => {
-        loadBrands();
+        loadBrandsData();
         if (product.brand_name) {
-            findBrandIdByName();
+            findBrandId();
         }
     });
     
-    async function loadBrands() {
+    async function loadBrandsData() {
         try {
-            const { data, error } = await supabase
-                .from('brands')
-                .select('id, name')
-                .order('name');
-                
-            if (error) throw error;
-            brands = data || [];
+            brands = await loadBrands();
         } catch (err: any) {
             console.error('Error loading brands:', err);
             errorMessage = 'Failed to load brands';
         }
     }
     
-    async function findBrandIdByName() {
+    async function findBrandId() {
         if (!product.brand_name) return;
         
         try {
-            const { data, error } = await supabase
-                .from('brands')
-                .select('id')
-                .eq('name', product.brand_name)
-                .single();
-                
-            if (error && error.code !== 'PGRST116') throw error;
-            if (data) selectedBrandId = data.id;
+            const brandId = await findBrandIdByName(product.brand_name);
+            if (brandId !== null) selectedBrandId = brandId;
         } catch (err) {
             console.error('Error finding brand ID:', err);
         }
     }
     
-    async function saveProduct(e: Event) {
+    async function saveProductHandler(e: Event) {
         isLoading = true;
         errorMessage = '';
         successMessage = '';
@@ -72,41 +60,12 @@
         e.preventDefault();        
         
         try {
-            const productData = {
-                name: product.name,
-                price: product.price,
-                description: product.description,
-                sku: product.sku,
-                stock: product.stock,
-                is_active: true,
-                brand_id: selectedBrandId
-            };
+            // Save the product data
+            const savedProduct = await saveProduct(product, isNew, selectedBrandId);
             
-            let savedProduct;
-            
-            if (isNew) {
-                const { data, error } = await supabase
-                    .from('products')
-                    .insert([productData])
-                    .select('id')
-                    .single();
-                    
-                if (error) throw error;
-                savedProduct = data;
-            } else {
-                const { data, error } = await supabase
-                    .from('products')
-                    .update(productData)
-                    .eq('id', product.id)
-                    .select('id')
-                    .single();
-                    
-                if (error) throw error;
-                savedProduct = data;
-            }
-            
+            // Upload images if any
             if (imageFiles && imageFiles.length > 0) {
-                await uploadProductImages(savedProduct.id);
+                await uploadProductImages(savedProduct.id, imageFiles, product.name);
             }
             
             successMessage = `Product ${isNew ? 'created' : 'updated'} successfully!`;
@@ -120,80 +79,13 @@
         }
     }
     
-    async function uploadProductImages(productId: number) {
-        if (!imageFiles || imageFiles.length === 0) return;
-        
-        for (let i = 0; i < imageFiles.length; i++) {
-            const file = imageFiles[i];
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${productId}_${Date.now()}_${i}.${fileExt}`;
-            const filePath = `product-images/${fileName}`;
-            
-            const { error: uploadError } = await supabase
-                .storage
-                .from('products')
-                .upload(filePath, file);
-                
-            if (uploadError) {
-                console.error('Error uploading image:', uploadError);
-                continue;
-            }
-            
-            const { data: publicUrl } = supabase
-                .storage
-                .from('products')
-                .getPublicUrl(filePath);
-                
-            if (!publicUrl) continue;
-            
-            await supabase
-                .from('product_images')
-                .insert([{
-                    product_id: productId,
-                    url: publicUrl.publicUrl,
-                    alt_text: product.name,
-                    position: i
-                }]);
-        }
-    }
-    
-    async function deleteImage(imageId: number) {
+    async function deleteImageHandler(imageId: number) {
         if (!confirm('Are you sure you want to delete this image?')) return;
         
         isLoading = true;
         
         try {
-            const { data: imageData, error: fetchError } = await supabase
-                .from('product_images')
-                .select('url')
-                .eq('id', imageId)
-                .single();
-                
-            if (fetchError) throw fetchError;
-            
-            const { error: deleteError } = await supabase
-                .from('product_images')
-                .delete()
-                .eq('id', imageId);
-                
-            if (deleteError) throw deleteError;
-            
-            if (imageData?.url) {
-                try {
-                    const storageUrl = new URL(imageData.url);
-                    const pathParts = storageUrl.pathname.split('/');
-                    const storagePath = pathParts.slice(2).join('/');
-                    
-                    if (storagePath) {
-                        await supabase
-                            .storage
-                            .from('products')
-                            .remove([storagePath]);
-                    }
-                } catch (err) {
-                    console.warn('Could not parse storage URL or delete file:', err);
-                }
-            }
+            await deleteProductImage(imageId);
             
             if (product.product_images) {
                 product.product_images = product.product_images.filter(img => img.id !== imageId);
@@ -208,18 +100,13 @@
         }
     }
     
-    async function deleteProduct() {
+    async function deleteProductHandler() {
         if (!confirm(`Are you sure you want to delete "${product.name}"?`)) return;
         
         isLoading = true;
         
         try {
-            const { error } = await supabase
-                .from('products')
-                .update({ is_active: false })
-                .eq('id', product.id);
-                
-            if (error) throw error;
+            await deleteProduct(product.id);
             
             successMessage = 'Product deleted successfully';
             onSave();
@@ -232,14 +119,14 @@
     }
 </script>
 
-<form onsubmit={saveProduct} class="space-y-6">
+<form onsubmit={saveProductHandler} class="space-y-6">
     <!-- Action Buttons -->
     <div class="flex justify-between mb-4">
         <div>
             {#if !isNew}
                 <Button
                     variant="error"
-                    onclick={deleteProduct}
+                    onclick={deleteProductHandler}
                     disabled={isLoading}
                     type="button"
                 >
@@ -383,7 +270,7 @@
                                     variant="error"
                                     type="button"
                                     className="absolute top-1 right-1 rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
-                                    onclick={() => deleteImage(image.id)}
+                                    onclick={() => deleteImageHandler(image.id)}
                                     disabled={isLoading}
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">

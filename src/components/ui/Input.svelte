@@ -6,7 +6,7 @@
     interface InputProps extends HTMLInputElement {
         variant?: "text" | "search" | "discount" | "button";
         label?: string;
-        bindValue?: string;
+        bindValue?: any;
         buttonStyling?: ClassValue;
         Button?: Snippet;
     }
@@ -23,6 +23,7 @@
         bindValue = $bindable(),
         buttonStyling = "",
         Button = undefined,
+        step = undefined,
     }: Partial<InputProps> = $props();
 
     const variantStyles = {
@@ -70,6 +71,7 @@
             {placeholder}
             {required}
             {disabled}
+            {step}
             bind:value={bindValue}
         />
     </div>
@@ -81,6 +83,7 @@
         {placeholder}
         {required}
         {disabled}
+        {step}
         bind:value={bindValue}
     />
 {:else}
@@ -92,6 +95,7 @@
             {placeholder}
             {required}
             {disabled}
+            {step}
             bind:value={bindValue}
         />
         {#if Button}

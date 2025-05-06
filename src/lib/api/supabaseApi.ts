@@ -173,3 +173,58 @@ export async function clearCart(userId: string) {
 
 	return { success: true };
 }
+
+/**
+ * Fetches a single product by ID with images and brand information
+ * @param productId The ID of the product to fetch
+ * @returns Promise with product data including images and brand info
+ */
+export async function fetchProductById(productId: number | string): Promise<ProductItem | null> {
+  const { data: product, error: productError } = await supabase
+    .from('products')
+    .select(`
+      *,
+      product_images (*)
+    `)
+    .eq('id', productId)
+    .eq('is_active', true)
+    .single();
+
+  if (productError) {
+    if (productError.code === 'PGRST116') {  // Code for "no rows returned"
+      return null;
+    }
+    throw productError;
+  }
+  
+  if (!product) return null;
+
+  // Fetch brand information if the product has a brand_id
+  let brand: Brand | null = null;
+  if (product.brand_id) {
+    const { data: brandData, error: brandError } = await supabase
+      .from('brands')
+      .select('*')
+      .eq('id', product.brand_id)
+      .single();
+    
+    if (brandError && brandError.code !== 'PGRST116') throw brandError;
+    if (brandData) brand = brandData;
+  }
+
+  return {
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    quantity: 1, 
+    image: product.product_images?.[0]?.url || '',
+    brand_name: brand?.name || null,
+    brand_image: brand?.image_url ?? null,
+    image_url: product.product_images?.[0]?.url || null, 
+    description: product.description || '',
+    sku: product.sku || '',
+    stock: product.stock,
+    variant: null,
+    product_images: product.product_images || []
+  };
+}

@@ -40,6 +40,7 @@ export interface ProductItem {
 	stock: number;
 	cart_id?: string;
 	variant: string | null;
+	product_images?: ProductImage[];
 }
 
 export type ShopItem = Partial<ProductItem>;

@@ -45,10 +45,10 @@ export async function fetchShopItems(): Promise<ProductItem[]> {
 
 	return (products as ProductWithImages[]).map(product => {
 		const brand = product.brand_id ? brands[product.brand_id] : null;
-		
+
 		// Process specifications if available
 		const specifications = [];
-		
+
 		if (product.product_specifications && Array.isArray(product.product_specifications)) {
 			for (const spec of product.product_specifications) {
 				if (spec.specification_attributes && spec.value) {
@@ -199,9 +199,9 @@ export async function clearCart(userId: string) {
  * @returns Promise with product data including images and brand info
  */
 export async function fetchProductById(productId: number | string): Promise<ProductItem | null> {
-  const { data: product, error: productError } = await supabase
-    .from('products')
-    .select(`
+	const { data: product, error: productError } = await supabase
+		.from('products')
+		.select(`
       *,
       product_images (*),
       product_specifications (
@@ -210,63 +210,63 @@ export async function fetchProductById(productId: number | string): Promise<Prod
         specification_attributes:specification_attribute_id (*)
       )
     `)
-    .eq('id', productId)
-    .eq('is_active', true)
-    .single();
+		.eq('id', productId)
+		.eq('is_active', true)
+		.single();
 
-  if (productError) {
-    if (productError.code === 'PGRST116') {  // Code for "no rows returned"
-      return null;
-    }
-    throw productError;
-  }
-  
-  if (!product) return null;
+	if (productError) {
+		if (productError.code === 'PGRST116') {  // Code for "no rows returned"
+			return null;
+		}
+		throw productError;
+	}
 
-  // Fetch brand information if the product has a brand_id
-  let brand: Brand | null = null;
-  if (product.brand_id) {
-    const { data: brandData, error: brandError } = await supabase
-      .from('brands')
-      .select('*')
-      .eq('id', product.brand_id)
-      .single();
-    
-    if (brandError && brandError.code !== 'PGRST116') throw brandError;
-    if (brandData) brand = brandData;
-  }
+	if (!product) return null;
 
-  // Process specifications if available
-  const specifications = [];
-  
-  if (product.product_specifications && Array.isArray(product.product_specifications)) {
-    for (const spec of product.product_specifications) {
-      // Only add specifications that have attributes and values
-      if (spec.specification_attributes && spec.value) {
-        specifications.push({
-          attribute: spec.specification_attributes,
-          value: spec.value
-        });
-      }
-    }
-  }
+	// Fetch brand information if the product has a brand_id
+	let brand: Brand | null = null;
+	if (product.brand_id) {
+		const { data: brandData, error: brandError } = await supabase
+			.from('brands')
+			.select('*')
+			.eq('id', product.brand_id)
+			.single();
 
-  return {
-    id: product.id,
-    name: product.name,
-    price: product.price,
-    quantity: 1, 
-    image: product.product_images?.[0]?.url || '',
-    brand_name: brand?.name || null,
-    brand_image: brand?.image_url ?? null,
-    image_url: product.product_images?.[0]?.url || null, 
-    description: product.description || '',
-    sku: product.sku || '',
-    stock: product.stock,
-    variant: null,
-    product_images: product.product_images || [],
-    specifications: specifications.length > 0 ? specifications : undefined
-  };
+		if (brandError && brandError.code !== 'PGRST116') throw brandError;
+		if (brandData) brand = brandData;
+	}
+
+	// Process specifications if available
+	const specifications = [];
+
+	if (product.product_specifications && Array.isArray(product.product_specifications)) {
+		for (const spec of product.product_specifications) {
+			// Only add specifications that have attributes and values
+			if (spec.specification_attributes && spec.value) {
+				specifications.push({
+					attribute: spec.specification_attributes,
+					value: spec.value
+				});
+			}
+		}
+	}
+
+	return {
+		id: product.id,
+		name: product.name,
+		price: product.price,
+		quantity: 1,
+		image: product.product_images?.[0]?.url || '',
+		brand_name: brand?.name || null,
+		brand_image: brand?.image_url ?? null,
+		image_url: product.product_images?.[0]?.url || null,
+		description: product.description || '',
+		sku: product.sku || '',
+		stock: product.stock,
+		variant: null,
+		product_images: product.product_images || [],
+		specifications: specifications.length > 0 ? specifications : undefined
+	};
 }
 
 /**
@@ -275,22 +275,22 @@ export async function fetchProductById(productId: number | string): Promise<Prod
  * @returns Promise with the created product
  */
 export async function createProduct(productData: Partial<ProductWithImages>) {
-  const { data, error } = await supabase
-    .from('products')
-    .insert([{
-      name: productData.name,
-      price: productData.price || 0,
-      description: productData.description || '',
-      sku: productData.sku || '',
-      stock: productData.stock || 0,
-      is_active: true,
-      brand_id: productData.brand_id
-    }])
-    .select('id')
-    .single();
+	const { data, error } = await supabase
+		.from('products')
+		.insert([{
+			name: productData.name,
+			price: productData.price || 0,
+			description: productData.description || '',
+			sku: productData.sku || '',
+			stock: productData.stock || 0,
+			is_active: true,
+			brand_id: productData.brand_id
+		}])
+		.select('id')
+		.single();
 
-  if (error) throw error;
-  return data;
+	if (error) throw error;
+	return data;
 }
 
 /**
@@ -300,22 +300,22 @@ export async function createProduct(productData: Partial<ProductWithImages>) {
  * @returns Promise with the updated product
  */
 export async function updateProduct(id: number, productData: Partial<ProductWithImages>) {
-  const { data, error } = await supabase
-    .from('products')
-    .update({
-      name: productData.name,
-      price: productData.price,
-      description: productData.description,
-      sku: productData.sku,
-      stock: productData.stock,
-      brand_id: productData.brand_id
-    })
-    .eq('id', id)
-    .select('id')
-    .single();
+	const { data, error } = await supabase
+		.from('products')
+		.update({
+			name: productData.name,
+			price: productData.price,
+			description: productData.description,
+			sku: productData.sku,
+			stock: productData.stock,
+			brand_id: productData.brand_id
+		})
+		.eq('id', id)
+		.select('id')
+		.single();
 
-  if (error) throw error;
-  return data;
+	if (error) throw error;
+	return data;
 }
 
 /**
@@ -324,13 +324,13 @@ export async function updateProduct(id: number, productData: Partial<ProductWith
  * @returns Promise with operation result
  */
 export async function deleteProduct(id: number) {
-  const { error } = await supabase
-    .from('products')
-    .update({ is_active: false })
-    .eq('id', id);
+	const { error } = await supabase
+		.from('products')
+		.update({ is_active: false })
+		.eq('id', id);
 
-  if (error) throw error;
-  return { success: true };
+	if (error) throw error;
+	return { success: true };
 }
 
 /**
@@ -342,24 +342,24 @@ export async function deleteProduct(id: number) {
  * @returns Promise with the created image data
  */
 export async function createProductImage(
-  productId: number, 
-  imageUrl: string, 
-  altText?: string, 
-  position: number = 0
+	productId: number,
+	imageUrl: string,
+	altText?: string,
+	position: number = 0
 ) {
-  const { data, error } = await supabase
-    .from('product_images')
-    .insert([{
-      product_id: productId,
-      url: imageUrl,
-      alt_text: altText || null,
-      position
-    }])
-    .select('id')
-    .single();
+	const { data, error } = await supabase
+		.from('product_images')
+		.insert([{
+			product_id: productId,
+			url: imageUrl,
+			alt_text: altText || null,
+			position
+		}])
+		.select('id')
+		.single();
 
-  if (error) throw error;
-  return data;
+	if (error) throw error;
+	return data;
 }
 
 /**
@@ -368,13 +368,13 @@ export async function createProductImage(
  * @returns Promise with operation result
  */
 export async function deleteProductImage(imageId: number) {
-  const { error } = await supabase
-    .from('product_images')
-    .delete()
-    .eq('id', imageId);
+	const { error } = await supabase
+		.from('product_images')
+		.delete()
+		.eq('id', imageId);
 
-  if (error) throw error;
-  return { success: true };
+	if (error) throw error;
+	return { success: true };
 }
 
 /**
@@ -382,11 +382,11 @@ export async function deleteProductImage(imageId: number) {
  * @returns Promise with brand data
  */
 export async function fetchBrands() {
-  const { data, error } = await supabase
-    .from('brands')
-    .select('id, name, image_url')
-    .order('name');
+	const { data, error } = await supabase
+		.from('brands')
+		.select('id, name, image_url')
+		.order('name');
 
-  if (error) throw error;
-  return data || [];
+	if (error) throw error;
+	return data || [];
 }

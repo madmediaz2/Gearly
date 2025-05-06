@@ -34,9 +34,14 @@
                 <p class="text-lg font-medium text-gray-800">
                     {capitalizeFirstLetter(cartItem.name)}
                 </p>
-                <h3 class="text-base font-normal text-gray-600 mb-3">
+                <h3 class="text-base font-normal text-gray-600">
                     {capitalizeFirstLetter(cartItem.brand_name)}
                 </h3>
+                {#if cartItem.specifications && cartItem.specifications.length > 0}
+                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full mb-2 inline-block">
+                        Specifications available
+                    </span>
+                {/if}
             </header>
 
             <footer class="flex justify-between items-center mt-1 z-10">

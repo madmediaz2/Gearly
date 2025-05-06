@@ -4,6 +4,7 @@
     import { page } from "$app/state";
     import { user } from "$lib/stores/authStore";
     import type { ProductItem } from "$lib/types/supabaseTypes";
+    import ProductSpecifications from "../../../components/ProductSpecifications.svelte";
 
     let product = $state<ProductItem | null>();
     let loading = $state(false);
@@ -88,6 +89,12 @@
 						</div>
 					{/each}
 				</div>
+			</div>
+		{/if}
+		
+		{#if product.specifications}
+			<div class="mt-8">
+				<ProductSpecifications specifications={product.specifications} />
 			</div>
 		{/if}
     {/if}

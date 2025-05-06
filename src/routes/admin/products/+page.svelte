@@ -1,0 +1,134 @@
+<script lang="ts">
+    import { onMount } from "svelte";
+    import { fetchShopItems } from "$lib/api/supabaseApi";
+    import type { ProductItem } from "$lib/types/supabaseTypes";
+    import Button from "../../../components/ui/Button.svelte";
+    import Input from "../../../components/ui/Input.svelte";
+    import ProductEditor from "../../../components/admin/ProductEditor.svelte";
+    
+    // State management
+    let products = $state<ProductItem[]>([]);
+    let isLoading = $state(true);
+    let error = $state<string | null>(null);
+    let selectedProduct = $state<ProductItem | null>(null);
+    let isCreating = $state(false);
+    
+    onMount(async () => {
+        await loadProducts();
+    });
+    
+    async function loadProducts() {
+        isLoading = true;
+        error = null;
+        try {
+            products = await fetchShopItems();
+        } catch (err: any) {
+            console.error('Error loading products:', err);
+            error = err.message || 'Failed to load products';
+        } finally {
+            isLoading = false;
+        }
+    }
+    
+    function selectProduct(product: ProductItem) {
+        selectedProduct = { ...product };
+        isCreating = false;
+    }
+    
+    function startCreatingProduct() {
+        // Create an empty product template
+        selectedProduct = {
+            id: 0, // Will be assigned by DB
+            name: '',
+            price: 0,
+            quantity: 1,
+            brand_name: null,
+            brand_image: null,
+            image_url: null,
+            image: '',
+            description: '',
+            sku: '',
+            stock: 0,
+            variant: null,
+            product_images: []
+        };
+        isCreating = true;
+    }
+</script>
+
+<div class="container mx-auto p-4">
+    <h1 class="text-2xl font-bold mb-6">Product Management</h1>
+    
+    <div class="flex flex-col md:flex-row gap-6">
+        <!-- Left side: List of products -->
+        <div class="w-full md:w-1/3 bg-white p-4 rounded-lg shadow-md">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Products</h2>
+                <Button 
+                    variant="primary" 
+                    onclick={startCreatingProduct}
+                >
+                    Add New Product
+                </Button>
+            </div>
+            
+            {#if isLoading}
+                <div class="flex justify-center items-center py-10">
+                    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900"></div>
+                </div>
+            {:else if error}
+                <div class="bg-red-100 text-red-700 p-4 rounded-md">
+                    <p>{error}</p>
+                </div>
+            {:else if products.length === 0}
+                <div class="text-center py-10">
+                    <p>No products found.</p>
+                </div>
+            {:else}
+                <div class="overflow-y-auto max-h-[calc(100vh-240px)]">
+                    <ul class="divide-y divide-gray-200">
+                        {#each products as product (product.id)}
+                            <!-- svelte-ignore a11y_click_events_have_key_events --><!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+                            <li 
+                                class="py-3 px-2 hover:bg-gray-100 cursor-pointer {selectedProduct?.id === product.id ? 'bg-gray-100' : ''}"
+                                onclick={() => selectProduct(product)}
+                            >
+                                <div class="flex items-center space-x-3">
+                                    {#if product.image_url}
+                                        <img 
+                                            src={product.image_url} 
+                                            alt={product.name} 
+                                            class="w-12 h-12 object-cover rounded"
+                                        />
+                                    {/if}
+                                    <div>
+                                        <p class="font-medium">{product.name}</p>
+                                        <p class="text-sm text-gray-500">€{product.price} - Stock: {product.stock}</p>
+                                    </div>
+                                </div>
+                            </li>
+                        {/each}
+                    </ul>
+                </div>
+            {/if}
+        </div>
+        
+        <!-- Right side: Product editor -->
+        <div class="w-full md:w-2/3 bg-white p-6 rounded-lg shadow-md">
+            {#if selectedProduct}
+                <h2 class="text-xl font-semibold mb-4">
+                    {isCreating ? 'Add New Product' : 'Edit Product'}
+                </h2>
+                <ProductEditor 
+                    product={selectedProduct} 
+                    isNew={isCreating}
+                    onSave={() => loadProducts()}
+                />
+            {:else}
+                <div class="flex items-center justify-center h-64 border-2 border-dashed border-gray-300 rounded-md">
+                    <p class="text-gray-500">Select a product to edit or click "Add New Product"</p>
+                </div>
+            {/if}
+        </div>
+    </div>
+</div>

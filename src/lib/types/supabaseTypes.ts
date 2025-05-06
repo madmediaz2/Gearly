@@ -13,6 +13,22 @@ export interface ProductImage {
 	position: number;
 }
 
+// Specification attribute definition
+export interface SpecificationAttribute {
+	id: number;
+	name: string;
+	slug: string;
+	unit: string | null | undefined;
+	created_at?: string;
+}
+
+// Product specification (join between product and attribute)
+export interface ProductSpecification {
+	product_id: number;
+	specification_attribute_id: number;
+	value: string;
+}
+
 // Type for products with their images
 export type ProductWithImages = {
 	id: number;
@@ -24,6 +40,11 @@ export type ProductWithImages = {
 	is_active: boolean;
 	brand_id: number | null;
 	product_images: ProductImage[];
+	product_specifications?: Array<{
+		specification_attribute_id: number;
+		value: string;
+		specification_attributes: SpecificationAttribute;
+	}>;
 }
 
 export interface ProductItem {
@@ -41,6 +62,10 @@ export interface ProductItem {
 	cart_id?: string;
 	variant: string | null;
 	product_images?: ProductImage[];
+	specifications?: {
+		attribute: SpecificationAttribute;
+		value: string;
+	}[];
 }
 
 export type ShopItem = Partial<ProductItem>;

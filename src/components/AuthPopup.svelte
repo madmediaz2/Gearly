@@ -47,8 +47,8 @@
         }
     }
 
-    async function handleSubmit(event: Event) {
-        event.preventDefault();
+    async function handleSubmit(e: Event) {
+        e.preventDefault();
         errorMessage = "";
         isLoading = true;
 

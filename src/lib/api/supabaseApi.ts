@@ -42,13 +42,12 @@ export async function fetchShopItems(): Promise<ProductItem[]> {
 			return acc;
 		}, {} as Record<number, Brand>);
 	}
-
 	return (products as ProductWithImages[]).map(product => {
 		const brand = product.brand_id ? brands[product.brand_id] : null;
-
+		
 		// Process specifications if available
 		const specifications = [];
-
+		
 		if (product.product_specifications && Array.isArray(product.product_specifications)) {
 			for (const spec of product.product_specifications) {
 				if (spec.specification_attributes && spec.value) {
@@ -236,6 +235,27 @@ export async function fetchProductById(productId: number | string): Promise<Prod
 		if (brandData) brand = brandData;
 	}
 
+	// Fetch category information for this product
+	let category: string | null = null;
+	const { data: categoryData, error: categoryError } = await supabase
+		.from('product_categories')
+		.select(`
+			categories:category_id (
+				name
+			)
+		`)
+		.eq('product_id', product.id)
+		.limit(1);
+		
+	if (!categoryError && categoryData && categoryData.length > 0) {
+		const categoryObj = categoryData[0]?.categories;
+		if (categoryObj && typeof categoryObj === 'object' && 'name' in categoryObj) {
+			category = categoryObj.name as string;
+		}
+	} else if (categoryError && categoryError.code !== 'PGRST116') {
+		console.error('Error fetching product category:', categoryError);
+	}
+
 	// Process specifications if available
 	const specifications = [];
 
@@ -264,6 +284,7 @@ export async function fetchProductById(productId: number | string): Promise<Prod
 		sku: product.sku || '',
 		stock: product.stock,
 		variant: null,
+		category: category || undefined,
 		product_images: product.product_images || [],
 		specifications: specifications.length > 0 ? specifications : undefined
 	};

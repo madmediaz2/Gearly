@@ -111,7 +111,7 @@ export async function getProductSpecifications(productId: number): Promise<Array
 }>> {
 	const { data, error } = await supabase
 		.from("product_specifications")
-    .select(`
+		.select(`
       product_id,
       value,
       specification_attributes!inner(id, name, slug, unit)
@@ -125,10 +125,10 @@ export async function getProductSpecifications(productId: number): Promise<Array
 		.filter(item => item.specification_attributes)
 		.map(item => {
 			// Get the first item if specification_attributes is an array or use as is
-			const attributeData = Array.isArray(item.specification_attributes) 
-				? item.specification_attributes[0] 
+			const attributeData = Array.isArray(item.specification_attributes)
+				? item.specification_attributes[0]
 				: item.specification_attributes;
-				
+
 			return {
 				attribute: {
 					id: attributeData.id,

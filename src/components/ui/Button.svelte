@@ -13,7 +13,8 @@
         | "link"
         | "social"
         | "cart-item"
-        | "error";
+        | "error"
+        | "tab";
     type ButtonSize = "sm" | "md" | "lg";
     type ButtonType = "button" | "submit" | "reset" | null | undefined;
 
@@ -53,7 +54,8 @@
         social: "flex items-center justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black pointer-events-auto cursor-pointer",
         "cart-item": "flex items-center bg-transparent border-none text-gray-500 text-xs cursor-pointer hover:text-black",
         error:
-            "pointer-events-auto cursor-pointer bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+            "pointer-events-auto cursor-pointer bg-red-500 hover:bg-red-600 text-white text-xs py-1 px-2 rounded",
+        tab: "py-2 px-4 mr-2 cursor-pointer text-gray-500 hover:text-gray-700"
     };
 
     const sizeStyles = {

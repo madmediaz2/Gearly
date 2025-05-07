@@ -1,6 +1,16 @@
 <script lang="ts">
-    import type { ProductItem, ProductImage } from "$lib/types/supabaseTypes";
-    import {deleteProduct, deleteProductImage, findBrandIdByName, loadBrands, saveProduct, uploadProductImages} from "$lib/api/productApi";
+    import type { ProductItem } from "$lib/types/supabaseTypes";
+    import {
+        deleteProduct, 
+        deleteProductImage, 
+        findBrandIdByName, 
+        loadBrands, 
+        saveProduct, 
+        uploadProductImages,
+        loadCategories,
+        getProductCategory,
+        updateProductCategory
+    } from "$lib/api/productApi";
     import Button from "../ui/Button.svelte";
     import Input from "../ui/Input.svelte";
     import SpecificationsEditor from "./SpecificationsEditor.svelte";
@@ -17,7 +27,9 @@
     let errorMessage = $state('');
     let successMessage = $state('');
     let brands = $state<{id: number, name: string}[]>([]);
+    let categories = $state<{id: number, name: string}[]>([]);
     let selectedBrandId = $state<number | null>(null);
+    let selectedCategoryId = $state<number | null>(null);
     let imageFiles = $state<FileList | null>(null);
     let formValid = $derived(
         !!product.name && 
@@ -27,8 +39,14 @@
     
     $effect(() => {
         loadBrandsData();
+        loadCategoriesData();
+        
         if (product.brand_name) {
             findBrandId();
+        }
+        
+        if (!isNew && product.id) {
+            findProductCategory();
         }
     });
     
@@ -41,6 +59,15 @@
         }
     }
     
+    async function loadCategoriesData() {
+        try {
+            categories = await loadCategories();
+        } catch (err: any) {
+            console.error('Error loading categories:', err);
+            errorMessage = 'Failed to load categories';
+        }
+    }
+    
     async function findBrandId() {
         if (!product.brand_name) return;
         
@@ -49,6 +76,17 @@
             if (brandId !== null) selectedBrandId = brandId;
         } catch (err) {
             console.error('Error finding brand ID:', err);
+        }
+    }
+    
+    async function findProductCategory() {
+        try {
+            const category = await getProductCategory(product.id);
+            if (category) {
+                selectedCategoryId = category.id;
+            }
+        } catch (err) {
+            console.error('Error finding product category:', err);
         }
     }
     
@@ -66,6 +104,11 @@
             // Upload images if any
             if (imageFiles && imageFiles.length > 0) {
                 await uploadProductImages(savedProduct.id, imageFiles, product.name);
+            }
+            
+            // Update product category if selected
+            if (selectedCategoryId) {
+                await updateProductCategory(savedProduct.id, selectedCategoryId);
             }
             
             successMessage = `Product ${isNew ? 'created' : 'updated'} successfully!`;
@@ -221,6 +264,22 @@
                     {/each}
                 </select>
             </div>
+            
+            <div>
+                <label for="product-category" class="block text-sm font-medium text-gray-700 mb-1">
+                    Category
+                </label>
+                <select 
+                    id="product-category"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black"
+                    bind:value={selectedCategoryId}
+                >
+                    <option value={null}>No Category</option>
+                    {#each categories as category}
+                        <option value={category.id}>{category.name}</option>
+                    {/each}
+                </select>
+            </div>
         </div>
         
         <!-- Description and Images Section -->
@@ -231,7 +290,7 @@
                 </label>
                 <textarea
                     id="product-description"
-                    rows="4"
+                    rows="14"
                     class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black"
                     bind:value={product.description}
                 ></textarea>

@@ -7,12 +7,11 @@
         getProductSpecifications,
         setProductSpecification,
         removeProductSpecification,
-        createSpecificationAttribute,
     } from "$lib/api/specificationsApi";
-    import type { SpecificationAttribute } from "$lib/types/supabaseTypes";
+    import type { ProductItem, SpecificationAttribute } from "$lib/types/supabaseTypes";
 
     interface Props {
-        productId: number;
+        productId: ProductItem['id'];
     }
 
     const { productId }: Props = $props();
@@ -27,12 +26,6 @@
     // For adding new specification
     let selectedAttributeId = $state<number | null>();
     let specValue = $state<string>("");
-    
-    // For creating new attributes
-    let newAttributeName = $state<string>("");
-    let newAttributeSlug = $state<string>("");
-    let newAttributeUnit = $state<string>("");
-    let creatingAttribute = $state(false);
 
     async function setProduct(){
         productSpecs = await getProductSpecifications(productId);
@@ -43,7 +36,6 @@
             loading = true;
             attributes = await fetchSpecificationAttributes();
 			
-
             if (productId) {
                 setProduct()
 				updateAvailableAttributes()
@@ -55,10 +47,6 @@
             loading = false;
         }
     });
-
-	$effect(() => {
-		setProduct()
-	})
 
     async function addSpecification() {
         if (!selectedAttributeId || !specValue.trim() || !productId) {
@@ -101,6 +89,10 @@
 		updateAvailableAttributes()
 	})
 
+    $effect(() => {
+		setProduct()
+	})
+
     async function removeSpec(attributeId: number) {
         try {
             if (productId) {
@@ -112,39 +104,6 @@
         } catch (err: any) {
             error = err.message || "Failed to remove specification";
             console.error(error);
-        }
-    }
-    
-    async function handleCreateAttribute() {
-        if (!newAttributeName.trim()) {
-            error = "Please enter an attribute name";
-            return;
-        }
-        
-        error = "";
-        creatingAttribute = true;
-        
-        try {
-            // Create the new attribute
-            const newAttribute = await createSpecificationAttribute({
-                name: newAttributeName.trim(),
-                slug: newAttributeSlug.trim() || undefined,
-                unit: newAttributeUnit.trim() || null
-            });
-            
-            // Add to attributes list
-            attributes = [...attributes, newAttribute];
-            
-            // Reset form
-            newAttributeName = "";
-            newAttributeSlug = "";
-            newAttributeUnit = "";
-            
-        } catch (err: any) {
-            error = err.message || "Failed to create attribute";
-            console.error(error);
-        } finally {
-            creatingAttribute = false;
         }
     }
 </script>
@@ -237,52 +196,5 @@
                 Add Specification
             </Button>
         </div>
-
-        <!-- Create new attribute -->
-        <div class="mt-8 border-t border-gray-200 pt-6">
-            <h4 class="text-lg font-medium text-gray-700 mb-3">Create New Attribute</h4>
-            
-            <div class="mb-4">
-                <label class="block mb-2 font-medium">
-                    Attribute Name:
-                    <Input
-                        type="text"
-                        bind:bindValue={newAttributeName}
-                        placeholder="Enter attribute name"
-                    />
-                </label>
-            </div>
-
-            <div class="mb-4">
-                <label class="block mb-2 font-medium">
-                    Slug:
-                    <Input
-                        type="text"
-                        bind:bindValue={newAttributeSlug}
-                        placeholder="Enter attribute slug"
-                    />
-                </label>
-            </div>
-
-            <div class="mb-4">
-                <label class="block mb-2 font-medium">
-                    Unit (optional):
-                    <Input
-                        type="text"
-                        bind:bindValue={newAttributeUnit}
-                        placeholder="e.g. GB, MHz, inches"
-                    />
-                </label>
-            </div>
-
-            <Button
-                disabled={!newAttributeName.trim() || creatingAttribute}
-                onclick={handleCreateAttribute}
-            >
-                {creatingAttribute ? "Creating..." : "Create Attribute"}
-            </Button>
-        </div>
-
-        
     {/if}
 </div>

@@ -3,8 +3,10 @@
     import { fetchShopItems } from "$lib/api/supabaseApi";
     import type { ProductItem } from "$lib/types/supabaseTypes";
     import Button from "../../../components/ui/Button.svelte";
-    import Input from "../../../components/ui/Input.svelte";
     import ProductEditor from "../../../components/admin/ProductEditor.svelte";
+    import BrandManager from "../../../components/admin/BrandManager.svelte";
+    import CategoryManager from "../../../components/admin/CategoryManager.svelte";
+    import AttributeManager from "../../../components/admin/AttributeManager.svelte";
     
     // State management
     let products = $state<ProductItem[]>([]);
@@ -12,6 +14,17 @@
     let error = $state<string | null>(null);
     let selectedProduct = $state<ProductItem | null>(null);
     let isCreating = $state(false);
+    
+    // Tab management
+    type Tab = 'product' | 'specifications' | 'brand' | 'category' | 'attributes';
+    let activeTab = $state<Tab>('product');
+    
+    function switchTab(tab: Tab) {
+        if (tab === 'specifications' && (!selectedProduct || isCreating)) {
+            return;
+        }
+        activeTab = tab;
+    }
     
     onMount(async () => {
         await loadProducts();
@@ -33,6 +46,7 @@
     function selectProduct(product: ProductItem) {
         selectedProduct = { ...product };
         isCreating = false;
+        activeTab = 'product';
     }
     
     function startCreatingProduct() {
@@ -53,6 +67,7 @@
             product_images: []
         };
         isCreating = true;
+        activeTab = 'product';
     }
 </script>
 
@@ -113,22 +128,75 @@
             {/if}
         </div>
         
-        <!-- Right side: Product editor -->
-        <div class="w-full md:w-2/3 bg-white p-6 rounded-lg shadow-md">
-            {#if selectedProduct}
-                <h2 class="text-xl font-semibold mb-4">
-                    {isCreating ? 'Add New Product' : 'Edit Product'}
-                </h2>
-                <ProductEditor 
-                    product={selectedProduct} 
-                    isNew={isCreating}
-                    onSave={() => loadProducts()}
-                />
-            {:else}
-                <div class="flex items-center justify-center h-64 border-2 border-dashed border-gray-300 rounded-md">
-                    <p class="text-gray-500">Select a product to edit or click "Add New Product"</p>
-                </div>
-            {/if}
+        <!-- Right side: Tabbed interface -->
+        <div class="w-full md:w-2/3">
+            <!-- Tab navigation -->
+            <div class="flex border-b border-gray-200 mb-4">
+                <Button
+                    variant="tab"
+                    className={activeTab === 'product' ? 'border-b-2 border-blue-500 font-medium' : ''}
+                    onclick={() => switchTab('product')}
+                >
+                    {isCreating ? 'Add New Product' : (selectedProduct ? 'Edit Product' : 'Products')}
+                </Button>
+                
+                
+                <Button
+                    variant="tab"
+                    className={activeTab === 'brand' ? 'border-b-2 border-blue-500 font-medium' : ''}
+                    onclick={() => switchTab('brand')}
+                >
+                    Brands
+                </Button>
+                
+                <Button
+                    variant="tab"
+                    className={activeTab === 'category' ? 'border-b-2 border-blue-500 font-medium' : ''}
+                    onclick={() => switchTab('category')}
+                >
+                    Categories
+                </Button>
+                
+                <Button
+                    variant="tab"
+                    className={activeTab === 'attributes' ? 'border-b-2 border-blue-500 font-medium' : ''}
+                    onclick={() => switchTab('attributes')}
+                >
+                    Attributes
+                </Button>
+            </div>
+            
+            <!-- Tab content -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                {#if activeTab === 'product'}
+                    {#if selectedProduct}
+                        <h2 class="text-xl font-semibold mb-4">
+                            {isCreating ? 'Add New Product' : 'Edit Product'}
+                        </h2>
+                        <ProductEditor 
+                            product={selectedProduct} 
+                            isNew={isCreating}
+                            onSave={() => loadProducts()}
+                        />
+                    {:else}
+                        <div class="flex items-center justify-center h-64 border-2 border-dashed border-gray-300 rounded-md">
+                            <p class="text-gray-500">Select a product to edit or click "Add New Product"</p>
+                        </div>
+                    {/if}
+                {:else if activeTab === 'brand'}
+                    <div>
+                        <BrandManager />
+                    </div>
+                {:else if activeTab === 'category'}
+                    <div>
+                        <CategoryManager />
+                    </div>
+                {:else if activeTab === 'attributes'}
+                    <div>
+                        <AttributeManager />
+                    </div>
+                {/if}
+            </div>
         </div>
     </div>
 </div>

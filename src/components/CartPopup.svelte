@@ -4,7 +4,12 @@
     import Input from "./ui/Input.svelte";
     import { cart } from "../lib/stores/cart";
     import { browser } from "$app/environment";
-    import { updateQuantity, clearCart, cartError, isCartLoading } from "../lib/stores/cart";
+    import {
+        updateQuantity,
+        clearCart,
+        cartError,
+        isCartLoading,
+    } from "../lib/stores/cart";
     import { capitalizeFirstLetter } from "../lib/utils";
 
     interface Props {
@@ -16,7 +21,7 @@
 
     let cartIsLoading = $state(false);
     let localCartError = $state<string | null>(null);
-    
+
     // Subscribe to the loading and error states
     $effect(() => {
         cartIsLoading = $isCartLoading;
@@ -24,7 +29,7 @@
     });
 
     async function increaseQuantity(id: number) {
-        const item = $cart.find(item => item.id === id);
+        const item = $cart.find((item) => item.id === id);
         if (item) {
             const newQuantity = (item.quantity || 1) + 1;
             await updateQuantity(id, newQuantity);
@@ -32,7 +37,7 @@
     }
 
     async function decreaseQuantity(id: number) {
-        const item = $cart.find(item => item.id === id);
+        const item = $cart.find((item) => item.id === id);
         if (item) {
             const newQuantity = (item.quantity || 1) - 1;
             await updateQuantity(id, newQuantity);
@@ -44,7 +49,7 @@
     }
 
     let totalPrice = $state(0);
-    let discountCode = $state<string>()
+    let discountCode = $state<string>();
 
     $effect(() => {
         totalPrice = $cart.reduce(
@@ -74,10 +79,15 @@
             };
         }
     });
-
 </script>
 
-<Popup title="Winkelwagen" isOpen={isOpen} {onClose} titleSeperator={true} errorMessage={localCartError || undefined}>
+<Popup
+    title="Winkelwagen"
+    {isOpen}
+    {onClose}
+    titleSeperator={true}
+    errorMessage={localCartError || undefined}
+>
     {#if $cart.length === 0}
         <p>Je winkelwagen is leeg.</p>
     {:else}
@@ -142,7 +152,9 @@
                 </Button>
 
                 <form class="flex items-center w-full sm:w-auto">
-                    <label for="discount-code" class="sr-only">Kortingscode</label>
+                    <label for="discount-code" class="sr-only"
+                        >Kortingscode</label
+                    >
                     <Input
                         id="discount-code"
                         variant="discount"
@@ -155,7 +167,11 @@
                     class="text-xl sm:text-2xl font-bold mt-2 sm:mt-0"
                     aria-label="Totaal bedrag"
                 >
-                    <span>{#if isSmallScreen}Totaal:{/if}€{totalPrice.toFixed(2)}</span>
+                    <span
+                        >{#if isSmallScreen}Totaal:{/if}€{totalPrice.toFixed(
+                            2,
+                        )}</span
+                    >
                 </output>
             </div>
         </section>

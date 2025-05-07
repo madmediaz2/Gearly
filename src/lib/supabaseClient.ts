@@ -22,6 +22,6 @@ export const createAdminClient = () => {
     });
 };
 
-export const supabaseAdmin = createAdminClient();
+//export const supabaseAdmin = createAdminClient();
 
 export { fetchShopItems, fetchCartItems, addItemToCart } from './api/supabaseApi';

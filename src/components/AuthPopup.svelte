@@ -113,7 +113,13 @@
     });
 </script>
 
-<Popup title={isLogin ? "Inloggen" : "Registreren"} {isOpen} {onClose} errorMessage={errorMessage} bind:isLoading={isLoading}>
+<Popup
+    title={isLogin ? "Inloggen" : "Registreren"}
+    {isOpen}
+    {onClose}
+    {errorMessage}
+    bind:isLoading
+>
     <!-- Form -->
     <form onsubmit={handleSubmit} class="space-y-4">
         {#if !isLogin}

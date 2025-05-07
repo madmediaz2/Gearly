@@ -40,11 +40,11 @@ export type ProductWithImages = {
 	is_active: boolean;
 	brand_id: number | null;
 	product_images: ProductImage[];
-	product_specifications?: Array<{
+	product_specifications?: {
 		specification_attribute_id: number;
 		value: string;
 		specification_attributes: SpecificationAttribute;
-	}>;
+	}[];
 }
 
 export interface ProductItem {
@@ -62,6 +62,7 @@ export interface ProductItem {
 	cart_id?: string;
 	variant: string | null;
 	product_images?: ProductImage[];
+	category?: string;
 	specifications?: {
 		attribute: SpecificationAttribute;
 		value: string;

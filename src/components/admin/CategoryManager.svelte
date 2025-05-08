@@ -1,9 +1,9 @@
-<!-- filepath: /Users/diaz/Developer/examen/Gearly/src/components/admin/CategoryManager.svelte -->
 <script lang="ts">
     import { onMount } from "svelte";
     import Button from "../ui/Button.svelte";
     import Input from "../ui/Input.svelte";
     import { loadCategories } from "$lib/api/productApi";
+    import { createCategory as createCategoryApi, deleteCategory as deleteCategoryApi } from "$lib/api/supabaseApi";
     import { supabase } from "$lib/supabaseClient";
     
     // State variables
@@ -44,23 +44,7 @@
         creatingCategory = true;
         
         try {
-            // Generate slug if not provided
-            const slug = categorySlug.trim() || categoryName.trim()
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, '-')
-                .replace(/^-|-$/g, '');
-                
-            // Create the category in the database
-            const { error: categoryError } = await supabase
-                .from('categories')
-                .insert([{ 
-                    name: categoryName.trim(),
-                    slug: slug
-                }]);
-                
-            if (categoryError) throw categoryError;
-            
-            // Refresh categories list
+            await createCategoryApi(categoryName, categorySlug);
             await loadCategoriesData();
             
             // Reset form
@@ -81,24 +65,11 @@
             return;
         }
         
+        error = null;
+        success = null;
+        
         try {
-            // Delete from product_categories first (junction table)
-            const { error: junctionError } = await supabase
-                .from('product_categories')
-                .delete()
-                .eq('category_id', categoryId);
-                
-            if (junctionError) throw junctionError;
-            
-            // Then delete the category itself
-            const { error: deleteError } = await supabase
-                .from('categories')
-                .delete()
-                .eq('id', categoryId);
-                
-            if (deleteError) throw deleteError;
-            
-            // Refresh categories list
+            await deleteCategoryApi(categoryId);
             await loadCategoriesData();
             
             success = "Category deleted successfully";

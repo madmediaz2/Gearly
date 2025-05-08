@@ -3,8 +3,7 @@
     import Button from "../ui/Button.svelte";
     import Input from "../ui/Input.svelte";
     import NotificationMessage from "../ui/NotificationMessage.svelte";
-    import { loadBrands } from "$lib/api/productApi";
-    import { createBrand, deleteBrand } from "$lib/api/supabaseApi";
+    import { loadBrands, createBrand, deleteBrand } from "$lib/api/supabaseApi";
 
     // State variables
     let brands = $state<{ id: number; name: string }[]>([]);

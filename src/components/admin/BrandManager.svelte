@@ -3,7 +3,7 @@
     import Button from "../ui/Button.svelte";
     import Input from "../ui/Input.svelte";
     import { loadBrands } from "$lib/api/productApi";
-    import { supabase } from "$lib/supabaseClient";
+    import { createBrand, deleteBrand } from "$lib/api/supabaseApi";
 
     // State variables
     let brands = $state<{ id: number; name: string }[]>([]);
@@ -32,7 +32,7 @@
         }
     }
 
-    async function createBrand() {
+    async function handleCreateBrand() {
         if (!brandName.trim()) {
             error = "Please enter a brand name";
             return;
@@ -43,51 +43,7 @@
         creatingBrand = true;
 
         try {
-            // Create the brand in the database
-            const { data: brandData, error: brandError } = await supabase
-                .from("brands")
-                .insert([{ name: brandName.trim() }])
-                .select("id")
-                .single();
-
-            if (brandError) throw brandError;
-
-            // Upload the brand image if one was provided
-            if (brandImageFile && brandData?.id) {
-                const fileExt = brandImageFile.name.split(".").pop();
-                const fileName = `brand_${brandData.id}_${Date.now()}.${fileExt}`;
-                const filePath = `brand-images/${fileName}`;
-
-                const { error: uploadError } = await supabase.storage
-                    .from("brands")
-                    .upload(filePath, brandImageFile);
-
-                if (uploadError) {
-                    console.error("Error uploading image:", uploadError);
-                    throw new Error("Failed to upload brand image");
-                }
-
-                const { data: publicUrl } = supabase.storage
-                    .from("brands")
-                    .getPublicUrl(filePath);
-
-                if (publicUrl) {
-                    // Update the brand with the image URL
-                    const { error: updateError } = await supabase
-                        .from("brands")
-                        .update({ image_url: publicUrl.publicUrl })
-                        .eq("id", brandData.id);
-
-                    if (updateError) {
-                        console.error(
-                            "Error updating brand with image:",
-                            updateError,
-                        );
-                    }
-                }
-            }
-
-            // Refresh brands list
+            await createBrand(brandName, brandImageFile || undefined);
             await loadBrandsData();
 
             // Reset form
@@ -103,7 +59,7 @@
         }
     }
 
-    async function deleteBrand(brandId: number) {
+    async function handleDeleteBrand(brandId: number) {
         if (
             !confirm(
                 "Are you sure you want to delete this brand? This may affect products using this brand.",
@@ -113,14 +69,7 @@
         }
 
         try {
-            const { error: deleteError } = await supabase
-                .from("brands")
-                .delete()
-                .eq("id", brandId);
-
-            if (deleteError) throw deleteError;
-
-            // Refresh brands list
+            await deleteBrand(brandId);
             await loadBrandsData();
 
             success = "Brand deleted successfully";
@@ -187,7 +136,7 @@
         {/if}
     </div>
 
-    <Button disabled={!brandName.trim() || creatingBrand} onclick={createBrand}>
+    <Button disabled={!brandName.trim() || creatingBrand} onclick={handleCreateBrand}>
         {creatingBrand ? "Creating..." : "Create Brand"}
     </Button>
 {/snippet}
@@ -227,7 +176,7 @@
                         <td class="py-2 px-2 border-b border-gray-200">
                             <Button
                                 variant="error"
-                                onclick={() => deleteBrand(brand.id)}
+                                onclick={() => handleDeleteBrand(brand.id)}
                             >
                                 Delete
                             </Button>
@@ -248,7 +197,6 @@
     {#if loading}
         <p class="py-2">Loading brands...</p>
     {:else}
-        <!-- Brands list -->
         <div>
             <div class="mb-6">
                 {@render CreateBrandForm()}

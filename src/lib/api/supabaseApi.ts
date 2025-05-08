@@ -411,3 +411,72 @@ export async function fetchBrands() {
 	if (error) throw error;
 	return data || [];
 }
+
+/**
+ * Creates a new brand and optionally uploads an image for it
+ * @param name The name of the brand to create
+ * @param imageFile Optional image file to upload for the brand
+ * @returns Promise with the created brand data including ID
+ */
+export async function createBrand(name: string, imageFile?: File) {
+	// Create the brand in the database
+	const { data: brandData, error: brandError } = await supabase
+		.from("brands")
+		.insert([{ name: name.trim() }])
+		.select("id")
+		.single();
+
+	if (brandError) throw brandError;
+
+	// Upload the brand image if one was provided
+	if (imageFile && brandData?.id) {
+		const fileExt = imageFile.name.split(".").pop();
+		const fileName = `brand_${brandData.id}_${Date.now()}.${fileExt}`;
+		const filePath = `brand-images/${fileName}`;
+
+		const { error: uploadError } = await supabase.storage
+			.from("brands")
+			.upload(filePath, imageFile);
+
+		if (uploadError) {
+			console.error("Error uploading image:", uploadError);
+			throw new Error("Failed to upload brand image");
+		}
+
+		const { data: publicUrl } = supabase.storage
+			.from("brands")
+			.getPublicUrl(filePath);
+
+		if (publicUrl) {
+			// Update the brand with the image URL
+			const { error: updateError } = await supabase
+				.from("brands")
+				.update({ image_url: publicUrl.publicUrl })
+				.eq("id", brandData.id);
+
+			if (updateError) {
+				console.error(
+					"Error updating brand with image:",
+					updateError,
+				);
+			}
+		}
+	}
+
+	return brandData;
+}
+
+/**
+ * Deletes a brand by ID
+ * @param brandId The ID of the brand to delete
+ * @returns Promise with operation result
+ */
+export async function deleteBrand(brandId: number) {
+	const { error } = await supabase
+		.from("brands")
+		.delete()
+		.eq("id", brandId);
+
+	if (error) throw error;
+	return { success: true };
+}

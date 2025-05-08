@@ -1,48 +1,5 @@
-// filepath: /Users/diaz/Developer/examen/Gearly/src/lib/api/productApi.ts
 import { supabase } from '../supabaseClient';
-import type { ProductItem } from '../types/supabaseTypes';
-
-/**
- * Loads all brands from the database
- * @returns Promise with array of brands containing id and name
- */
-export async function loadBrands(): Promise<{ id: number, name: string }[]> {
-	try {
-		const { data, error } = await supabase
-			.from('brands')
-			.select('id, name')
-			.order('name');
-
-		if (error) throw error;
-		return data || [];
-	} catch (err) {
-		console.error('Error loading brands:', err);
-		throw new Error('Failed to load brands');
-	}
-}
-
-/**
- * Finds a brand ID by name
- * @param brandName The name of the brand to search for
- * @returns Promise with the brand ID if found, or null if not
- */
-export async function findBrandIdByName(brandName: string): Promise<number | null> {
-	if (!brandName) return null;
-
-	try {
-		const { data, error } = await supabase
-			.from('brands')
-			.select('id')
-			.eq('name', brandName)
-			.single();
-
-		if (error && error.code !== 'PGRST116') throw error;
-		return data ? data.id : null;
-	} catch (err) {
-		console.error('Error finding brand ID:', err);
-		return null;
-	}
-}
+import type { ProductItem, Brand } from '../types/supabaseTypes';
 
 /**
  * Saves a product (creates new or updates existing)
@@ -322,3 +279,133 @@ export async function removeProductCategory(productId: number): Promise<boolean>
 		throw err;
 	}
 }
+
+/**
+ * Creates a product image entry in the database
+ * @param productId The product ID to associate with the image
+ * @param imageUrl The URL of the uploaded image
+ * @param altText Optional alt text for the image
+ * @param position Optional position for image ordering
+ * @returns Promise with the created image data
+ */
+export async function createProductImage(
+	productId: number,
+	imageUrl: string,
+	altText?: string,
+	position: number = 0
+) {
+	const { data, error } = await supabase
+		.from('product_images')
+		.insert([{
+			product_id: productId,
+			url: imageUrl,
+			alt_text: altText || null,
+			position
+		}])
+		.select('id')
+		.single();
+
+	if (error) throw error;
+	return data;
+}
+
+
+
+/**
+ * Fetches a single product by ID with images and brand information
+ * @param productId The ID of the product to fetch
+ * @returns Promise with product data including images and brand info
+ */
+export async function fetchProductById(productId: number | string): Promise<ProductItem | null> {
+	const { data: product, error: productError } = await supabase
+		.from('products')
+		.select(`
+      *,
+      product_images (*),
+      product_specifications (
+        specification_attribute_id,
+        value,
+        specification_attributes:specification_attribute_id (*)
+      )
+    `)
+		.eq('id', productId)
+		.eq('is_active', true)
+		.single();
+
+	if (productError) {
+		if (productError.code === 'PGRST116') {  // Code for "no rows returned"
+			return null;
+		}
+		throw productError;
+	}
+
+	if (!product) return null;
+
+	// Fetch brand information if the product has a brand_id
+	let brand: Brand | null = null;
+	if (product.brand_id) {
+		const { data: brandData, error: brandError } = await supabase
+			.from('brands')
+			.select('*')
+			.eq('id', product.brand_id)
+			.single();
+
+		if (brandError && brandError.code !== 'PGRST116') throw brandError;
+		if (brandData) brand = brandData;
+	}
+
+	// Fetch category information for this product
+	let category: string | null = null;
+	const { data: categoryData, error: categoryError } = await supabase
+		.from('product_categories')
+		.select(`
+			categories:category_id (
+				name
+			)
+		`)
+		.eq('product_id', product.id)
+		.limit(1);
+		
+	if (!categoryError && categoryData && categoryData.length > 0) {
+		const categoryObj = categoryData[0]?.categories;
+		if (categoryObj && typeof categoryObj === 'object' && 'name' in categoryObj) {
+			category = categoryObj.name as string;
+		}
+	} else if (categoryError && categoryError.code !== 'PGRST116') {
+		console.error('Error fetching product category:', categoryError);
+	}
+
+	// Process specifications if available
+	const specifications = [];
+
+	if (product.product_specifications && Array.isArray(product.product_specifications)) {
+		for (const spec of product.product_specifications) {
+			if (spec.specification_attributes && spec.value) {
+				specifications.push({
+					attribute: spec.specification_attributes,
+					value: spec.value
+				});
+			}
+		}
+	}
+
+	return {
+		id: product.id,
+		name: product.name,
+		price: product.price,
+		quantity: 1,
+		image: product.product_images?.[0]?.url || '',
+		brand_name: brand?.name || null,
+		brand_image: brand?.image_url ?? null,
+		image_url: product.product_images?.[0]?.url || null,
+		description: product.description || '',
+		sku: product.sku || '',
+		stock: product.stock,
+		variant: null,
+		category: category || undefined,
+		product_images: product.product_images || [],
+		specifications: specifications.length > 0 ? specifications : undefined
+	};
+}
+
+

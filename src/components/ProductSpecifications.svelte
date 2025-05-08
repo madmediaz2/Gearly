@@ -1,14 +1,19 @@
 <script lang="ts">
     import type { SpecificationAttribute } from "$lib/types/supabaseTypes";
 
-    export let specifications:
-        | Array<{ attribute: SpecificationAttribute; value: string }>
-        | undefined = undefined;
+    interface Props {
+        specifications: Array<{ attribute: SpecificationAttribute; value: string }>
+        hideHeader?: Boolean
+    }
+
+    const { specifications, hideHeader = false }: Props = $props()
 </script>
 
 {#if specifications && specifications.length > 0}
     <div class="mt-8 p-4 rounded-lg bg-slate-50">
-        <h3 class="font-semibold text-xl mb-3 text-slate-800 border-b border-slate-200 pb-2">Specifications</h3>
+        {#if !hideHeader}
+            <h3 class="font-semibold text-xl mb-3 text-slate-800 border-b border-slate-200 pb-2">Specifications</h3>
+        {/if}
 
         <table class="w-full border-collapse">
             <tbody>

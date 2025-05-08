@@ -4,6 +4,7 @@
     import Searchbar from "../components/Navbar.svelte";
     import { initializeAuth } from "$lib/stores/authStore";
     import Footer from "../components/Footer.svelte";
+    import ComparisonPopup from "../components/ComparisonPopup.svelte";
     let { children } = $props();
 
     onMount(() => {
@@ -21,4 +22,5 @@
     <footer>
         <Footer />
     </footer>
+    <ComparisonPopup />
 </div>

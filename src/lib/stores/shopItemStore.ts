@@ -175,3 +175,77 @@ export function clearShopItemCache(): void {
         localStorage.removeItem('shopItems');
     }
 }
+
+/**
+ * Updates the stock levels of products in the cache after checkout
+ * @param purchasedProductIds Array of product IDs that were purchased
+ * @returns Promise that resolves when cache is updated
+ */
+export async function updateStockAfterCheckout(purchasedProductIds: number[]): Promise<void> {
+    if (!purchasedProductIds || purchasedProductIds.length === 0) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/update-stock-cache?productIds=${purchasedProductIds.join(',')}`);
+        
+        if (!response.ok) {
+            console.error('Failed to fetch updated stock levels:', await response.text());
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success || !data.products) {
+            console.error('Invalid response from update-stock-cache:', data);
+            return;
+        }
+        
+        shopItems.update(items => {
+            return items.map(item => {
+                const updatedProduct = data.products.find((p: ProductItem) => p.id === item.id);
+                if (updatedProduct) {
+                    return { 
+                        ...item, 
+                        stock: updatedProduct.stock,
+                        price: updatedProduct.price || item.price
+                    };
+                }
+                return item;
+            });
+        });
+        
+        cachedItems = cachedItems.map(item => {
+            const updatedProduct = data.products.find((p: ProductItem) => p.id === item.id);
+            if (updatedProduct) {
+                return { 
+                    ...item, 
+                    stock: updatedProduct.stock,
+                    price: updatedProduct.price || item.price
+                };
+            }
+            return item;
+        });
+        
+        const selectedItem = get(selectedShopItem);
+        if (selectedItem) {
+            const updatedProduct = data.products.find((p: ProductItem) => p.id === selectedItem.id);
+            if (updatedProduct) {
+                selectedShopItem.update(item => {
+                    if (item) {
+                        return {
+                            ...item,
+                            stock: updatedProduct.stock,
+                            price: updatedProduct.price || item.price
+                        };
+                    }
+                    return item;
+                });
+            }
+        }
+
+        console.log('Shop item cache updated with new stock levels');
+    } catch (error) {
+        console.error('Error updating shop item cache after checkout:', error);
+    }
+}

@@ -9,6 +9,9 @@
         clearCart,
         cartError,
         isCartLoading,
+        processCheckout,
+        isCheckoutLoading,
+        checkoutError,
     } from "../lib/stores/cart";
     import { capitalizeFirstLetter } from "../lib/utils";
 
@@ -21,11 +24,15 @@
 
     let cartIsLoading = $state(false);
     let localCartError = $state<string | null>(null);
+    let checkoutIsLoading = $state(false);
+    let localCheckoutError = $state<string | null>(null);
 
     // Subscribe to the loading and error states
     $effect(() => {
         cartIsLoading = $isCartLoading;
         localCartError = $cartError;
+        checkoutIsLoading = $isCheckoutLoading;
+        localCheckoutError = $checkoutError;
     });
 
     async function increaseQuantity(id: number) {
@@ -177,11 +184,20 @@
         </section>
 
         <footer>
+            {#if localCheckoutError}
+                <p class="text-red-500 text-sm mb-2">{localCheckoutError}</p>
+            {/if}
             <Button
                 variant="primary"
                 className="w-full py-3 sm:py-2 bg-black text-white rounded text-base"
+                disabled={checkoutIsLoading || $cart.length === 0}
+                onclick={processCheckout}
             >
-                Afrekenen
+                {#if checkoutIsLoading}
+                    <span>Processing...</span>
+                {:else}
+                    <span>Afrekenen</span>
+                {/if}
             </Button>
         </footer>
     {/if}

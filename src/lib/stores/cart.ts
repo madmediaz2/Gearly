@@ -2,12 +2,15 @@ import { writable, get } from 'svelte/store';
 import { user } from './authStore';
 import { browser } from '$app/environment';
 import { addItemToCart, fetchCartItems, clearCart as clearCartDB } from '$lib/api/supabaseApi';
+import { createCheckoutSession, redirectToCheckout } from '$lib/api/stripeApi';
 import type { ProductItem } from '$lib/types/supabaseTypes';
 
 
 export const cart = writable<ProductItem[]>([]);
 export const isCartLoading = writable(false);
 export const cartError = writable<string | null>(null);
+export const isCheckoutLoading = writable(false);
+export const checkoutError = writable<string | null>(null);
 
 // Load cart from localStorage on client-side initialization
 if (browser) {
@@ -156,18 +159,24 @@ export async function updateQuantity(itemId: number, newQuantity: number) {
 export async function clearCart() {
     const currentUser = get(user);
     
+    console.log('Clearing cart');
     cartError.set(null);
     
     // Clear cart in store
     cart.set([]);
+    console.log('Cart cleared in local store');
     
     if (currentUser) {
+        console.log(`Clearing cart in database for user ${currentUser.id}`);
         try {
             await clearCartDB(currentUser.id);
+            console.log('Cart cleared in database successfully');
         } catch (error) {
             console.error('Error clearing cart in database:', error);
             cartError.set('Failed to clear your cart');
         }
+    } else {
+        console.log('No logged in user, skipping database cart clearing');
     }
 }
 
@@ -213,4 +222,34 @@ export function getItemQuantity(itemId: ProductItem['id']): number {
     const items: ProductItem[] = get(cart);
     const existingItem = items.find(item => item.id === itemId);
     return existingItem ? existingItem.quantity : 0;
+}
+
+/**
+ * Process checkout for the items in the cart with Stripe
+ * Redirects the user to Stripe's checkout page
+ */
+export async function processCheckout(): Promise<void> {
+    const items = get(cart);
+    
+    if (items.length === 0) {
+        cartError.set('Your cart is empty');
+        return;
+    }
+    
+    try {
+        isCheckoutLoading.set(true);
+        checkoutError.set(null);
+        
+        // Create a checkout session
+        const sessionId = await createCheckoutSession(items);
+        
+        // Redirect to Stripe checkout
+        await redirectToCheckout(sessionId);
+        
+    } catch (error) {
+        console.error('Error during checkout:', error);
+        checkoutError.set(error instanceof Error ? error.message : 'An error occurred during checkout');
+    } finally {
+        isCheckoutLoading.set(false);
+    }
 }

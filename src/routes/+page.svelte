@@ -1,27 +1,20 @@
 <script lang="ts">
     import ShopItem from "../components/ShopItem.svelte";
-    import { cart, addToCart } from "../lib/stores/cart";
+    import { addToCart } from "../lib/stores/cart";
     import type { ProductItem } from "$lib/types/supabaseTypes";
-    import { fetchShopItems } from "$lib/supabaseClient";
     import { onMount } from "svelte";
+    import { shopItems, isShopItemsLoading, shopItemsError, loadShopItems } from "../lib/stores/shopItemStore";
 
-    let shopItems = $state<ProductItem[]>([]);
-    let isLoading = $state(true);
-    let error = $state<string | null>();
+    // Reactive store bindings
+    let isLoading = $state(false);
+    let items = $state<ProductItem[]>([]);
+    let error = $state<string | null>(null);
 
-    // Fetch shop items from Supabase
-    async function loadItems() {
-        isLoading = true;
-        error = null;
-        try {
-            shopItems = await fetchShopItems();
-        } catch (err: any) {
-            console.error('Error loading shop items:', err);
-            error = err.message || 'Failed to load shop items';
-        } finally {
-            isLoading = false;
-        }
-    }
+    $effect(() => {
+        isLoading = $isShopItemsLoading;
+        items = $shopItems;
+        error = $shopItemsError;
+    });
 
     // Add item to cart
     function onAddToCart(item: ProductItem) {
@@ -29,32 +22,48 @@
     }
 
     onMount(() => {
-        loadItems();
+        loadShopItems();
     })
 </script>
+
+{#snippet LoadingSpinner()}
+    <div class="flex justify-center items-center py-10">
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900"></div>
+    </div>
+{/snippet}
+
+{#snippet ErrorMessage(message: string)}
+    <div class="bg-red-100 text-red-700 p-4 rounded-md">
+        <p>{message}</p>
+    </div>
+{/snippet}
+
+{#snippet EmptyState()}
+    <div class="text-center py-10">
+        <p>No products found.</p>
+    </div>
+{/snippet}
+
+{#snippet ProductGrid(products: ProductItem[])}
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {#each products as item (item.id)}
+            <div class="flex justify-center">
+                <ShopItem cartItem={item} onAddToCart={() => onAddToCart(item)} />
+            </div>
+        {/each}
+    </div>
+{/snippet}
 
 <div class="container mx-auto p-4">
     <h1 class="text-2xl font-bold mb-6">Featured Products</h1>
 
     {#if isLoading}
-        <div class="flex justify-center items-center py-10">
-            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900"></div>
-        </div>
+        {@render LoadingSpinner()}
     {:else if error}
-        <div class="bg-red-100 text-red-700 p-4 rounded-md">
-            <p>{error}</p>
-        </div>
-    {:else if shopItems.length === 0}
-        <div class="text-center py-10">
-            <p>No products found.</p>
-        </div>
+        {@render ErrorMessage(error)}
+    {:else if items.length === 0}
+        {@render EmptyState()}
     {:else}
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {#each shopItems as item (item.id)}
-                <div class="flex justify-center">
-                    <ShopItem cartItem={item} onAddToCart={() => onAddToCart(item)} />
-                </div>
-            {/each}
-        </div>
+        {@render ProductGrid(items)}
     {/if}
 </div>

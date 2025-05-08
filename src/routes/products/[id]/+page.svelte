@@ -11,6 +11,7 @@
         getShopItemById,
         loadShopItems
     } from "$lib/stores/shopItemStore";
+    import { comparisonStore, comparisonCount } from "$lib/stores/comparisonStore";
     import type { ProductItem } from "$lib/types/supabaseTypes";
     import ProductSpecifications from "../../../components/ProductSpecifications.svelte";
     import Button from "../../../components/ui/Button.svelte";
@@ -24,6 +25,9 @@
     let selectedVariant = $state("");
     //TODO: add variants to database
     let variants = $state<string[]>([]);
+    
+    let isProductInComparison = $state(false);
+    let canAddToComparison = $state(true);
 
 
     async function loadProduct(){
@@ -53,12 +57,33 @@
         loadProduct()
     })
 
+    $effect(() => {
+        if (product?.id) {
+            isProductInComparison = comparisonStore.isInComparison(product.id);
+            canAddToComparison = !comparisonStore.isComparisonFull() || isProductInComparison;
+        }
+    })
+
+    function handleToggleComparison(item: ProductItem) {
+        if (!item) return;
+        
+        if (comparisonStore.isInComparison(item.id)) {
+            comparisonStore.removeFromComparison(item.id);
+            isProductInComparison = false;
+        } else {
+            const added = comparisonStore.addToComparison(item);
+            if (added) {
+                isProductInComparison = true;
+            }
+        }
+        canAddToComparison = !comparisonStore.isComparisonFull() || isProductInComparison;
+    }
+
     async function fetchRelatedProducts() {
         if (!product) return;
 
         try {
-            // Use shop item store instead of direct API call
-            const allProducts = await loadShopItems(false); // Use cached data if available
+            const allProducts = await loadShopItems(false);
             relatedProducts = allProducts
                 .filter(
                     (item) =>
@@ -66,7 +91,7 @@
                         (item.brand_name === product?.brand_name ||
                             item.category === product?.category),
                 )
-                .slice(0, 8); // Limit to 8 items
+                .slice(0, 8);
         } catch (err) {
             console.error("Error fetching related products:", err);
         }
@@ -75,7 +100,6 @@
     async function handleAddToCart() {
         if (!product) return;
 
-        // Validate quantity
         if (quantity <= 0) {
             return;
         }
@@ -309,8 +333,13 @@
 
         <!-- Compare button -->
         <div class="mb-6">
-            <Button variant="secondary" className="w-full">
-                Vergelijk
+            <Button 
+                variant="secondary" 
+                className="w-full" 
+                onclick={() => handleToggleComparison(product)}
+                disabled={!canAddToComparison && !isProductInComparison}
+            >
+                {isProductInComparison ? 'Remove from Compare' : 'Add to Compare'}
             </Button>
         </div>
 

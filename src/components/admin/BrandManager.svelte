@@ -3,11 +3,16 @@
     import Button from "../ui/Button.svelte";
     import Input from "../ui/Input.svelte";
     import NotificationMessage from "../ui/NotificationMessage.svelte";
-    import { loadBrands, createBrand, deleteBrand } from "$lib/api/supabaseApi";
+    import { 
+        brands, 
+        isBrandsLoading, 
+        brandsError, 
+        loadAllBrands, 
+        createBrand, 
+        deleteBrand 
+    } from "$lib/stores/brandStore";
 
     // State variables
-    let brands = $state<{ id: number; name: string }[]>([]);
-    let loading = $state(true);
     let error = $state<string | null>(null);
     let success = $state<string | null>(null);
 
@@ -16,19 +21,24 @@
     let brandImageFile = $state<File | null>(null);
     let creatingBrand = $state(false);
 
-    onMount(async () => {
-        await loadBrandsData();
+    // Subscribe to store errors
+    $effect(() => {
+        if ($brandsError) {
+            error = $brandsError;
+        }
     });
 
-    async function loadBrandsData() {
+    onMount(async () => {
+        await loadBrandsData(false);
+    });
+
+    async function loadBrandsData(onMount = true) {
         try {
-            loading = true;
-            brands = await loadBrands();
-            loading = false;
+            error = null;
+            await loadAllBrands(onMount); // Force refresh from database
         } catch (err: any) {
             error = err.message || "Failed to load brands";
             console.error(error);
-            loading = false;
         }
     }
 
@@ -44,7 +54,6 @@
 
         try {
             await createBrand(brandName, brandImageFile || undefined);
-            await loadBrandsData();
 
             // Reset form
             brandName = "";
@@ -68,10 +77,11 @@
             return;
         }
 
+        error = null;
+        success = null;
+
         try {
             await deleteBrand(brandId);
-            await loadBrandsData();
-
             success = "Brand deleted successfully";
         } catch (err: any) {
             error = err.message || "Failed to delete brand";
@@ -126,10 +136,10 @@
     </Button>
 {/snippet}
 
-{#snippet BrandsTable(brands: { id: number; name: string }[])}
+{#snippet BrandsTable()}
     <h3 class="text-lg font-medium text-gray-700 mb-3">Existing Brands</h3>
 
-    {#if brands.length === 0}
+    {#if $brands.length === 0}
         <p class="text-gray-500 italic">No brands found</p>
     {:else}
         <table class="w-full border-collapse">
@@ -150,7 +160,7 @@
                 </tr>
             </thead>
             <tbody>
-                {#each brands as brand}
+                {#each $brands as brand}
                     <tr>
                         <td class="py-2 px-2 border-b border-gray-200"
                             >{brand.id}</td
@@ -179,7 +189,7 @@
     <NotificationMessage message={error} type="error" />
     <NotificationMessage message={success} type="success" />
 
-    {#if loading}
+    {#if $isBrandsLoading}
         <p class="py-2">Loading brands...</p>
     {:else}
         <div>
@@ -187,7 +197,7 @@
                 {@render CreateBrandForm()}
             </div>
             <div>
-                {@render BrandsTable(brands)}
+                {@render BrandsTable()}
             </div>
         </div>
     {/if}

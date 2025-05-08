@@ -1,4 +1,3 @@
-<!-- filepath: /Users/diaz/Developer/examen/Gearly/src/components/admin/AttributeManager.svelte -->
 <script lang="ts">
     import { onMount } from "svelte";
     import Button from "../ui/Button.svelte";
@@ -102,12 +101,6 @@
             console.error(error);
         }
     }
-
-    import { createEventDispatcher } from "svelte";
-
-    // Define snippets
-    // Notification message snippet for errors and success messages
-    const dispatch = createEventDispatcher();
 </script>
 
 {#snippet NotificationMessage(message: string | null, type: 'error' | 'success')}

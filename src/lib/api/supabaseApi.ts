@@ -115,6 +115,11 @@ export {
 } from './categoryApi';
 
 export {
+	createOrder,
+	addOrderItems
+} from './orderApi';
+
+export {
 	fetchSpecificationAttributes,
 	fetchSpecificationAttributeById,
 	createSpecificationAttribute,

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { fetchShopItems } from "$lib/api/supabaseApi";
     import type { ProductItem } from "$lib/types/supabaseTypes";
+    import { loadShopItems } from "$lib/stores/shopItemStore";
     import Button from "../../../components/ui/Button.svelte";
     import ProductEditor from "../../../components/admin/ProductEditor.svelte";
     import BrandManager from "../../../components/admin/BrandManager.svelte";
@@ -27,14 +27,14 @@
     }
     
     onMount(async () => {
-        await loadProducts();
+        await loadProducts(false);
     });
     
-    async function loadProducts() {
+    async function loadProducts(onMount: boolean = true) {
         isLoading = true;
         error = null;
         try {
-            products = await fetchShopItems();
+            products = await loadShopItems(onMount);
         } catch (err: any) {
             console.error('Error loading products:', err);
             error = err.message || 'Failed to load products';

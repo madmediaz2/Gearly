@@ -1,6 +1,5 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { fetchProductById, fetchShopItems } from "$lib/api/supabaseApi";
     import { page } from "$app/state";
     import { user } from "$lib/stores/authStore";
     import {
@@ -8,6 +7,10 @@
         getItemQuantity,
         updateQuantityIfInCart,
     } from "$lib/stores/cart";
+    import { 
+        getShopItemById,
+        loadShopItems
+    } from "$lib/stores/shopItemStore";
     import type { ProductItem } from "$lib/types/supabaseTypes";
     import ProductSpecifications from "../../../components/ProductSpecifications.svelte";
     import Button from "../../../components/ui/Button.svelte";
@@ -22,11 +25,13 @@
     //TODO: add variants to database
     let variants = $state<string[]>([]);
 
-    onMount(async () => {
+
+    async function loadProduct(){
         try {
             loading = true;
             const productId = page.params.id;
-            product = await fetchProductById(productId);
+            
+            product = await getShopItemById(productId);
 
             if (!product) {
                 error = "Product not found";
@@ -42,13 +47,18 @@
         } finally {
             loading = false;
         }
-    });
+    }
+
+    $effect(() => {
+        loadProduct()
+    })
 
     async function fetchRelatedProducts() {
         if (!product) return;
 
         try {
-            const allProducts = await fetchShopItems();
+            // Use shop item store instead of direct API call
+            const allProducts = await loadShopItems(false); // Use cached data if available
             relatedProducts = allProducts
                 .filter(
                     (item) =>

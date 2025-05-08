@@ -32,7 +32,7 @@
     </div>
 {/snippet}
 
-{#snippet ErrorMessage(message: string)}
+{#snippet ErrorMessage(message: String)}
     <div class="bg-red-100 text-red-700 p-4 rounded-md">
         <p>{message}</p>
     </div>

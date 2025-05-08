@@ -170,3 +170,47 @@ export async function clearCart() {
         }
     }
 }
+
+/**
+ * Updates the quantity of an item in the cart ONLY if it already exists.
+ * Returns true if the item was found and updated, false otherwise.
+ */
+export async function updateQuantityIfInCart(itemId: number, quantity: number): Promise<boolean> {
+    const currentUser = get(user);
+    let itemFound = false;
+    
+    cart.update(items => {
+        const existingItemIndex = items.findIndex(i => i.id === itemId);
+        if (existingItemIndex > -1) {
+            items[existingItemIndex].quantity = quantity;
+            itemFound = true;
+        }
+        return items;
+    });
+    
+    if (itemFound && currentUser) {
+        try {
+            // Use await to ensure the promise is handled properly
+            await addItemToCart(
+                currentUser.id,
+                itemId,
+                quantity
+            );
+        } catch (error) {
+            console.error('Error updating quantity in database:', error);
+            cartError.set('Failed to update item quantity');
+        }
+    }
+    
+    return itemFound;
+}
+
+/**
+ * Returns the quantity of a specific item in the cart.
+ * If the item is not in the cart, returns 0.
+ */
+export function getItemQuantity(itemId: ProductItem['id']): number {
+    const items: ProductItem[] = get(cart);
+    const existingItem = items.find(item => item.id === itemId);
+    return existingItem ? existingItem.quantity : 0;
+}

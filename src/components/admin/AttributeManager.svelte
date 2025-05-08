@@ -104,136 +104,147 @@
     }
 
     import { createEventDispatcher } from "svelte";
+
+    // Define snippets
+    // Notification message snippet for errors and success messages
+    const dispatch = createEventDispatcher();
 </script>
+
+{#snippet NotificationMessage(message: string | null, type: 'error' | 'success')}
+    {#if message}
+        <div class="text-{type === 'error' ? 'red' : 'green'}-600 mb-4 p-2 bg-{type === 'error' ? 'red' : 'green'}-100 rounded">
+            {message}
+        </div>
+    {/if}
+{/snippet}
+
+{#snippet CreateAttributeForm()}
+    <div class="mb-6">
+        <h3 class="text-lg font-medium text-gray-700 mb-3">
+            Create New Attribute
+        </h3>
+
+        <div class="mb-4">
+            <label class="block mb-2 font-medium">
+                Attribute Name:
+                <Input
+                    type="text"
+                    bind:bindValue={newAttributeName}
+                    placeholder="Enter attribute name"
+                />
+            </label>
+        </div>
+
+        <div class="mb-4">
+            <label class="block mb-2 font-medium">
+                Slug:
+                <Input
+                    type="text"
+                    bind:bindValue={newAttributeSlug}
+                    placeholder="Enter attribute slug"
+                />
+            </label>
+        </div>
+
+        <div class="mb-4">
+            <label class="block mb-2 font-medium">
+                Unit (optional):
+                <Input
+                    type="text"
+                    bind:bindValue={newAttributeUnit}
+                    placeholder="e.g. GB, MHz, inches"
+                />
+            </label>
+        </div>
+
+        <Button
+            disabled={!newAttributeName.trim() || creatingAttribute}
+            onclick={handleCreateAttribute}
+        >
+            {creatingAttribute ? "Creating..." : "Create Attribute"}
+        </Button>
+    </div>
+{/snippet}
+
+{#snippet AttributesTable(attributes: SpecificationAttribute[])}
+    <div>
+        <h3 class="text-lg font-medium text-gray-700 mb-3">
+            Available Attributes
+        </h3>
+
+        {#if attributes.length === 0}
+            <p class="text-gray-500 italic">No attributes found</p>
+        {:else}
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr>
+                        <th
+                            class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700"
+                            >ID</th
+                        >
+                        <th
+                            class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700"
+                            >Name</th
+                        >
+                        <th
+                            class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700"
+                            >Slug</th
+                        >
+                        <th
+                            class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700"
+                            >Unit</th
+                        >
+                        <th
+                            class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700"
+                            >Action</th
+                        >
+                    </tr>
+                </thead>
+                <tbody>
+                    {#each attributes as attribute}
+                        <tr>
+                            <td class="py-2 px-2 border-b border-gray-200"
+                                >{attribute.id}</td
+                            >
+                            <td class="py-2 px-2 border-b border-gray-200"
+                                >{attribute.name}</td
+                            >
+                            <td class="py-2 px-2 border-b border-gray-200"
+                                >{attribute.slug || "-"}</td
+                            >
+                            <td class="py-2 px-2 border-b border-gray-200"
+                                >{attribute.unit || "-"}</td
+                            >
+                            <td class="py-2 px-2 border-b border-gray-200">
+                                <Button
+                                    variant="error"
+                                    onclick={() =>
+                                        deleteAttribute(attribute.id)}
+                                >
+                                    Delete
+                                </Button>
+                            </td>
+                        </tr>
+                    {/each}
+                </tbody>
+            </table>
+        {/if}
+    </div>
+{/snippet}
 
 <div>
     <h2 class="text-xl font-semibold mb-4">Attribute Management</h2>
 
-    {#if error}
-        <div class="text-red-600 mb-4 p-2 bg-red-100 rounded">
-            {error}
-        </div>
-    {/if}
-
-    {#if success}
-        <div class="text-green-600 mb-4 p-2 bg-green-100 rounded">
-            {success}
-        </div>
-    {/if}
+    {@render NotificationMessage(error, 'error')}
+    {@render NotificationMessage(success, 'success')}
 
     {#if loading}
         <p class="py-2">Loading attributes...</p>
     {:else}
         <!-- Create new attribute -->
-        <div class="mb-6">
-            <h3 class="text-lg font-medium text-gray-700 mb-3">
-                Create New Attribute
-            </h3>
-
-            <div class="mb-4">
-                <label class="block mb-2 font-medium">
-                    Attribute Name:
-                    <Input
-                        type="text"
-                        bind:bindValue={newAttributeName}
-                        placeholder="Enter attribute name"
-                    />
-                </label>
-            </div>
-
-            <div class="mb-4">
-                <label class="block mb-2 font-medium">
-                    Slug:
-                    <Input
-                        type="text"
-                        bind:bindValue={newAttributeSlug}
-                        placeholder="Enter attribute slug"
-                    />
-                </label>
-            </div>
-
-            <div class="mb-4">
-                <label class="block mb-2 font-medium">
-                    Unit (optional):
-                    <Input
-                        type="text"
-                        bind:bindValue={newAttributeUnit}
-                        placeholder="e.g. GB, MHz, inches"
-                    />
-                </label>
-            </div>
-
-            <Button
-                disabled={!newAttributeName.trim() || creatingAttribute}
-                onclick={handleCreateAttribute}
-            >
-                {creatingAttribute ? "Creating..." : "Create Attribute"}
-            </Button>
-        </div>
+        {@render CreateAttributeForm()}
 
         <!-- Attributes list -->
-        <div>
-            <h3 class="text-lg font-medium text-gray-700 mb-3">
-                Available Attributes
-            </h3>
-
-            {#if attributes.length === 0}
-                <p class="text-gray-500 italic">No attributes found</p>
-            {:else}
-                <table class="w-full border-collapse">
-                    <thead>
-                        <tr>
-                            <th
-                                class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700"
-                                >ID</th
-                            >
-                            <th
-                                class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700"
-                                >Name</th
-                            >
-                            <th
-                                class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700"
-                                >Slug</th
-                            >
-                            <th
-                                class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700"
-                                >Unit</th
-                            >
-                            <th
-                                class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700"
-                                >Action</th
-                            >
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {#each attributes as attribute}
-                            <tr>
-                                <td class="py-2 px-2 border-b border-gray-200"
-                                    >{attribute.id}</td
-                                >
-                                <td class="py-2 px-2 border-b border-gray-200"
-                                    >{attribute.name}</td
-                                >
-                                <td class="py-2 px-2 border-b border-gray-200"
-                                    >{attribute.slug || "-"}</td
-                                >
-                                <td class="py-2 px-2 border-b border-gray-200"
-                                    >{attribute.unit || "-"}</td
-                                >
-                                <td class="py-2 px-2 border-b border-gray-200">
-                                    <Button
-                                        variant="error"
-                                        onclick={() =>
-                                            deleteAttribute(attribute.id)}
-                                    >
-                                        Delete
-                                    </Button>
-                                </td>
-                            </tr>
-                        {/each}
-                    </tbody>
-                </table>
-            {/if}
-        </div>
+        {@render AttributesTable(attributes)}
     {/if}
 </div>

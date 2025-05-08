@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import Button from "../ui/Button.svelte";
     import Input from "../ui/Input.svelte";
+    import NotificationMessage from "../ui/NotificationMessage.svelte";
     import { loadBrands } from "$lib/api/productApi";
     import { createBrand, deleteBrand } from "$lib/api/supabaseApi";
 
@@ -87,22 +88,7 @@
     }
 </script>
 
-{#snippet NotificationMessage(
-    message: string | null,
-    type: "error" | "success",
-)}
-    {#if message}
-        <div
-            class="text-{type === 'error'
-                ? 'red'
-                : 'green'}-600 mb-4 p-2 bg-{type === 'error'
-                ? 'red'
-                : 'green'}-100 rounded"
-        >
-            {message}
-        </div>
-    {/if}
-{/snippet}
+
 
 {#snippet CreateBrandForm()}
     <h3 class="text-lg font-medium text-gray-700 mb-3">Create New Brand</h3>
@@ -191,8 +177,8 @@
 <div>
     <h2 class="text-xl font-semibold mb-4">Brand Management</h2>
 
-    {@render NotificationMessage(error, "error")}
-    {@render NotificationMessage(success, "success")}
+    <NotificationMessage message={error} type="error" />
+    <NotificationMessage message={success} type="success" />
 
     {#if loading}
         <p class="py-2">Loading brands...</p>

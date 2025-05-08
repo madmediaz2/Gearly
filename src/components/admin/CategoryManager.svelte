@@ -2,9 +2,9 @@
     import { onMount } from "svelte";
     import Button from "../ui/Button.svelte";
     import Input from "../ui/Input.svelte";
+    import NotificationMessage from "../ui/NotificationMessage.svelte";
     import { loadCategories } from "$lib/api/productApi";
     import { createCategory as createCategoryApi, deleteCategory as deleteCategoryApi } from "$lib/api/supabaseApi";
-    import { supabase } from "$lib/supabaseClient";
     
     // State variables
     let categories = $state<{id: number, name: string, slug?: string}[]>([]);
@@ -33,7 +33,7 @@
         }
     }
     
-    async function createCategory() {
+    async function handleCreateCategory() {
         if (!categoryName.trim()) {
             error = "Please enter a category name";
             return;
@@ -60,7 +60,7 @@
         }
     }
     
-    async function deleteCategory(categoryId: number) {
+    async function handleDeleteCategory(categoryId: number) {
         if (!confirm("Are you sure you want to delete this category? This may affect products using this category.")) {
             return;
         }
@@ -80,93 +80,92 @@
     }
 </script>
 
+{#snippet CreateCategoryForm()}
+    <h3 class="text-lg font-medium text-gray-700 mb-3">Create New Category</h3>
+    
+    <div class="mb-4">
+        <label class="block mb-2 font-medium">
+            Category Name:
+            <Input
+                type="text"
+                bind:bindValue={categoryName}
+                placeholder="Enter category name"
+            />
+        </label>
+    </div>
+    
+    <div class="mb-4">
+        <label class="block mb-2 font-medium">
+            Slug (optional):
+            <Input
+                type="text"
+                bind:bindValue={categorySlug}
+                placeholder="Enter category slug"
+            />
+            <span class="text-xs text-gray-500">If left empty, a slug will be generated from the name</span>
+        </label>
+    </div>
+    
+    <Button
+        disabled={!categoryName.trim() || creatingCategory}
+        onclick={handleCreateCategory}
+    >
+        {creatingCategory ? "Creating..." : "Create Category"}
+    </Button>
+{/snippet}
+
+{#snippet CategoriesTable(categories: {id: number, name: string, slug?: string}[])}
+    <h3 class="text-lg font-medium text-gray-700 mb-3">Existing Categories</h3>
+    
+    {#if categories.length === 0}
+        <p class="text-gray-500 italic">No categories found</p>
+    {:else}
+        <table class="w-full border-collapse">
+            <thead>
+                <tr>
+                    <th class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700">ID</th>
+                    <th class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700">Name</th>
+                    <th class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700">Slug</th>
+                    <th class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {#each categories as category}
+                    <tr>
+                        <td class="py-2 px-2 border-b border-gray-200">{category.id}</td>
+                        <td class="py-2 px-2 border-b border-gray-200">{category.name}</td>
+                        <td class="py-2 px-2 border-b border-gray-200">{category.slug || "-"}</td>
+                        <td class="py-2 px-2 border-b border-gray-200">
+                            <Button
+                                variant="error"
+                                onclick={() => handleDeleteCategory(category.id)}
+                            >
+                                Delete
+                            </Button>
+                        </td>
+                    </tr>
+                {/each}
+            </tbody>
+        </table>
+    {/if}
+{/snippet}
+
 <div>
     <h2 class="text-xl font-semibold mb-4">Category Management</h2>
     
-    {#if error}
-        <div class="text-red-600 mb-4 p-2 bg-red-100 rounded">
-            {error}
-        </div>
-    {/if}
-    
-    {#if success}
-        <div class="text-green-600 mb-4 p-2 bg-green-100 rounded">
-            {success}
-        </div>
-    {/if}
+    <NotificationMessage message={error} type="error" />
+    <NotificationMessage message={success} type="success" />
     
     {#if loading}
         <p class="py-2">Loading categories...</p>
     {:else}
-        <div class="mb-6">
-            <h3 class="text-lg font-medium text-gray-700 mb-3">Create New Category</h3>
-            
-            <div class="mb-4">
-                <label class="block mb-2 font-medium">
-                    Category Name:
-                    <Input
-                        type="text"
-                        bind:bindValue={categoryName}
-                        placeholder="Enter category name"
-                    />
-                </label>
-            </div>
-            
-            <div class="mb-4">
-                <label class="block mb-2 font-medium">
-                    Slug (optional):
-                    <Input
-                        type="text"
-                        bind:bindValue={categorySlug}
-                        placeholder="Enter category slug"
-                    />
-                    <span class="text-xs text-gray-500">If left empty, a slug will be generated from the name</span>
-                </label>
-            </div>
-            
-            <Button
-                disabled={!categoryName.trim() || creatingCategory}
-                onclick={createCategory}
-            >
-                {creatingCategory ? "Creating..." : "Create Category"}
-            </Button>
-        </div>
-        
-        <!-- Categories list -->
         <div>
-            <h3 class="text-lg font-medium text-gray-700 mb-3">Existing Categories</h3>
-            
-            {#if categories.length === 0}
-                <p class="text-gray-500 italic">No categories found</p>
-            {:else}
-                <table class="w-full border-collapse">
-                    <thead>
-                        <tr>
-                            <th class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700">ID</th>
-                            <th class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700">Name</th>
-                            <th class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700">Slug</th>
-                            <th class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {#each categories as category}
-                            <tr>
-                                <td class="py-2 px-2 border-b border-gray-200">{category.id}</td>
-                                <td class="py-2 px-2 border-b border-gray-200">{category.name}</td>
-                                <td class="py-2 px-2 border-b border-gray-200">{category.slug || "-"}</td>
-                                <td class="py-2 px-2 border-b border-gray-200">
-                                    <Button
-                                        variant="error"
-                                        onclick={() => deleteCategory(category.id)}
-                                    >
-                                        Delete
-                                    </Button>
-                                </td>
-                            </tr>
-                        {/each}
-                    </tbody>
-                </table>
-            {/if}
+            <div class="mb-6">
+                {@render CreateCategoryForm()}
+            </div>
+            <div>
+                {@render CategoriesTable(categories)}
+            </div>
         </div>
     {/if}
 </div>

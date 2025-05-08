@@ -2,6 +2,7 @@
     import { onMount } from "svelte";
     import Button from "../ui/Button.svelte";
     import Input from "../ui/Input.svelte";
+    import NotificationMessage from "../ui/NotificationMessage.svelte";
     import {
         fetchSpecificationAttributes,
         getProductSpecifications,
@@ -21,7 +22,8 @@
         { attribute: SpecificationAttribute; value: string }[]
     >([]);
     let loading = $state(true);
-    let error = $state<string>();
+    let error = $state<string | null>();
+    let success = $state<string | null>();
 
     // For adding new specification
     let selectedAttributeId = $state<number | null>();
@@ -37,8 +39,8 @@
             attributes = await fetchSpecificationAttributes();
 			
             if (productId) {
-                setProduct()
-				updateAvailableAttributes()
+                setProduct();
+				updateAvailableAttributes();
             }
         } catch (err: any) {
             error = err.message || "Failed to load specifications";
@@ -54,7 +56,8 @@
             return;
         }
 
-        error = "";
+        error = null;
+        success = null;
         try {
             // Add the specification to the product
             await setProductSpecification(
@@ -63,12 +66,14 @@
                 specValue.trim(),
             );
 
-            // Refresh the product specifications
             productSpecs = await getProductSpecifications(productId);
+            
+            updateAvailableAttributes();
 
-            // Reset form
             selectedAttributeId = null;
             specValue = "";
+            
+            success = "Specification added successfully";
         } catch (err: any) {
             error = err.message || "Failed to add specification";
             console.error(error);
@@ -85,21 +90,25 @@
     }
 
 	$effect(() => {
-		const _ = productId
-		updateAvailableAttributes()
+		const _ = productId;
+		updateAvailableAttributes();
 	})
 
     $effect(() => {
-		setProduct()
+		setProduct();
 	})
 
     async function removeSpec(attributeId: number) {
+        error = null;
+        success = null;
         try {
             if (productId) {
                 await removeProductSpecification(productId, attributeId);
                 productSpecs = productSpecs.filter(
                     (spec) => spec.attribute.id !== attributeId,
                 );
+                updateAvailableAttributes();
+                success = "Specification removed successfully";
             }
         } catch (err: any) {
             error = err.message || "Failed to remove specification";
@@ -108,93 +117,98 @@
     }
 </script>
 
+{#snippet CurrentSpecsTable(specs: { attribute: SpecificationAttribute; value: string }[])}
+    <h4 class="text-lg font-medium text-gray-700 mb-3">Current Specifications</h4>
+    {#if specs.length === 0}
+        <p class="text-gray-500 italic">No specifications added yet</p>
+    {:else}
+        <table class="w-full border-collapse mb-4">
+            <thead>
+                <tr>
+                    <th class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700">Attribute</th>
+                    <th class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700">Value</th>
+                    <th class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700">Unit</th>
+                    <th class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {#each specs as spec}
+                    <tr>
+                        <td class="py-2 px-2 border-b border-gray-200">{spec.attribute.name}</td>
+                        <td class="py-2 px-2 border-b border-gray-200">{spec.value}</td>
+                        <td class="py-2 px-2 border-b border-gray-200">{spec.attribute.unit || "-"}</td>
+                        <td class="py-2 px-2 border-b border-gray-200">
+                            <button
+                                class="bg-red-500 hover:bg-red-600 text-white text-xs py-1 px-2 rounded"
+                                onclick={() => removeSpec(spec.attribute.id)}
+                            >
+                                Remove
+                            </button>
+                        </td>
+                    </tr>
+                {/each}
+            </tbody>
+        </table>
+    {/if}
+{/snippet}
+
+{#snippet AddSpecificationForm()}
+    <h4 class="text-lg font-medium text-gray-700 mb-3">Add Specification</h4>
+
+    <div class="mb-4">
+        <label class="block mb-2 font-medium">
+            Attribute:
+            <select 
+                bind:value={selectedAttributeId}
+                class="w-full p-2 border border-gray-200 rounded-md bg-white mt-1"
+            >
+                <option value={null}>Select an attribute</option>
+                {#each availableAttributes as attr}
+                    <option value={attr.id}>
+                        {attr.name}
+                        {attr.unit ? `(${attr.unit})` : ""}
+                    </option>
+                {/each}
+            </select>
+        </label>
+    </div>
+
+    <div class="mb-4">
+        <label class="block mb-2 font-medium">
+            Value:
+            <Input
+                type="text"
+                bind:bindValue={specValue}
+                placeholder="Enter specification value"
+            />
+        </label>
+    </div>
+
+    <Button
+        disabled={!selectedAttributeId || !specValue.trim()}
+        onclick={addSpecification}
+    >
+        Add Specification
+    </Button>
+{/snippet}
+
 <div class="mt-6 p-4 border border-gray-200 rounded-md">
     <h3 class="text-xl font-semibold text-gray-800 mt-0">Product Specifications</h3>
 
-    {#if error}
-        <div class="text-red-600 mb-4 p-2 bg-red-100 rounded">
-            {error}
-        </div>
-    {/if}
+    <NotificationMessage message={error} type="error" />
+    <NotificationMessage message={success} type="success" />
 
     {#if loading}
         <p class="py-2">Loading specifications...</p>
     {:else}
         <!-- Current specifications -->
         <div class="mt-6">
-            <h4 class="text-lg font-medium text-gray-700 mb-3">Current Specifications</h4>
-            {#if productSpecs.length === 0}
-                <p class="text-gray-500 italic">No specifications added yet</p>
-            {:else}
-                <table class="w-full border-collapse mb-4">
-                    <thead>
-                        <tr>
-                            <th class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700">Attribute</th>
-                            <th class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700">Value</th>
-                            <th class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700">Unit</th>
-                            <th class="text-left py-2 px-2 border-b-2 border-gray-200 font-semibold text-gray-700">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {#each productSpecs as spec}
-                            <tr>
-                                <td class="py-2 px-2 border-b border-gray-200">{spec.attribute.name}</td>
-                                <td class="py-2 px-2 border-b border-gray-200">{spec.value}</td>
-                                <td class="py-2 px-2 border-b border-gray-200">{spec.attribute.unit || "-"}</td>
-                                <td class="py-2 px-2 border-b border-gray-200">
-                                    <button
-                                        class="bg-red-500 hover:bg-red-600 text-white text-xs py-1 px-2 rounded"
-                                        onclick={() => removeSpec(spec.attribute.id)}
-                                    >
-                                        Remove
-                                    </button>
-                                </td>
-                            </tr>
-                        {/each}
-                    </tbody>
-                </table>
-            {/if}
+            {@render CurrentSpecsTable(productSpecs)}
         </div>
 
         <!-- Add new specification -->
         <div class="mt-6">
-            <h4 class="text-lg font-medium text-gray-700 mb-3">Add Specification</h4>
-
-            <div class="mb-4">
-                <label class="block mb-2 font-medium">
-                    Attribute:
-                    <select 
-                        bind:value={selectedAttributeId}
-                        class="w-full p-2 border border-gray-200 rounded-md bg-white mt-1"
-                    >
-                        <option value={null}>Select an attribute</option>
-                        {#each availableAttributes as attr}
-                            <option value={attr.id}>
-                                {attr.name}
-                                {attr.unit ? `(${attr.unit})` : ""}
-                            </option>
-                        {/each}
-                    </select>
-                </label>
-            </div>
-
-            <div class="mb-4">
-                <label class="block mb-2 font-medium">
-                    Value:
-                    <Input
-                        type="text"
-                        bind:bindValue={specValue}
-                        placeholder="Enter specification value"
-                    />
-                </label>
-            </div>
-
-            <Button
-                disabled={!selectedAttributeId || !specValue.trim()}
-                onclick={addSpecification}
-            >
-                Add Specification
-            </Button>
+            {@render AddSpecificationForm()}
         </div>
     {/if}
 </div>

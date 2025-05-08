@@ -101,12 +101,10 @@
             // Save the product data
             const savedProduct = await saveProduct(product, isNew, selectedBrandId);
             
-            // Upload images if any
             if (imageFiles && imageFiles.length > 0) {
                 await uploadProductImages(savedProduct.id, imageFiles, product.name);
             }
             
-            // Update product category if selected
             if (selectedCategoryId) {
                 await updateProductCategory(savedProduct.id, selectedCategoryId);
             }

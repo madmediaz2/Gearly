@@ -6,6 +6,12 @@ export interface Brand {
 	image_url: string | null;
 }
 
+export interface Category {
+	id: number;
+	name: string;
+	slug: string;
+}
+
 export interface ProductImage {
 	id: number;
 	url: string;

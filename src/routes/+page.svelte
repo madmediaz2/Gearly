@@ -48,7 +48,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {#each products as item (item.id)}
             <div class="flex justify-center">
-                <ShopItem cartItem={item} onAddToCart={() => onAddToCart(item)} />
+                <ShopItem product={item} onAddToCart={() => onAddToCart(item)} />
             </div>
         {/each}
     </div>

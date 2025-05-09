@@ -3,7 +3,15 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Configure with proper cookie options to fix auth issues
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        flowType: 'implicit'
+      }
+});
 
 export const createAdminClient = () => {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -16,13 +24,15 @@ export const createAdminClient = () => {
     
     return createClient(supabaseUrl, supabaseServiceRoleKey, {
         auth: {
-            autoRefreshToken: false,
-            persistSession: false
-        }
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true,
+            flowType: 'implicit'
+          }
     });
 };
 
-//export const supabaseAdmin = createAdminClient();
+export const supabaseAdmin = createAdminClient();
 
 // Export commonly used API functions for convenience
 export * from './api/supabaseApi';

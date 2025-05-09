@@ -2,6 +2,7 @@ import { writable, get } from 'svelte/store';
 import { browser } from '$app/environment';
 import { fetchShopItems, fetchProductById } from '$lib/api/supabaseApi';
 import type { ProductItem } from '$lib/types/supabaseTypes';
+import type { Category } from './categoryStore';
 
 // Create the shop item stores
 export const shopItems = writable<ProductItem[]>([]);
@@ -161,6 +162,26 @@ export function getItemsByCategory(category: string): ProductItem[] {
     return get(shopItems).filter(item => 
         item.category && item.category.toLowerCase() === category.toLowerCase()
     );
+}
+
+/**
+ * Gets shop items from a specific category using the category slug
+ * This works with the Category store to first find the category by slug,
+ * then filter products by the category name
+ * @param slug The slug of the category to filter by
+ * @returns Array of shop items in that category
+ */
+export function getItemsByCategorySlug(category: Category): ProductItem[] {
+    // Since we need to convert from slug to category name, we'll use the Category store
+    try {        
+        if (category) {
+            return getItemsByCategory(category.name);
+        }
+    } catch (error) {
+        console.error("Error getting category by slug:", error);
+    }
+    
+    return [];
 }
 
 /**

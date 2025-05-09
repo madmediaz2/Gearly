@@ -12,9 +12,12 @@
         toggleSheet: () => void;
         popupControls: PopupControls;
         onLogout: () => void;
+        categories: Array<{ id: number, name: string, slug: string }>;
+        isLoading: boolean;
+        error: string | null;
     }
 
-    const { sheetOpen, toggleSheet, popupControls, onLogout }: Props = $props();
+    const { sheetOpen, toggleSheet, popupControls, onLogout, categories, isLoading, error }: Props = $props();
 </script>
 
 {#if sheetOpen}
@@ -71,21 +74,21 @@
                         <img src="/menu.svg" alt="menu" class="mr-2" />
                         <span>Categorieen</span>
                     </Button>
-                    <Button variant="mobile-nav">
-                        <span>Aanbiedingen</span>
-                    </Button>
-                    <Button variant="mobile-nav">
-                        <span>Laptops</span>
-                    </Button>
-                    <Button variant="mobile-nav">
-                        <span>Desktops</span>
-                    </Button>
-                    <Button variant="mobile-nav">
-                        <span>Mobiel</span>
-                    </Button>
-                    <Button variant="mobile-nav">
-                        <span>Tweede Kans</span>
-                    </Button>
+                    
+                    <!-- Dynamic categories loaded from database -->
+                    {#if isLoading}
+                        <div class="py-2 text-gray-400">Loading categories...</div>
+                    {:else if error}
+                        <div class="py-2 text-red-500">Error: {error}</div>
+                    {:else}
+                        {#each categories as category}
+                            <Button variant="mobile-nav">
+                                <a href={`/categories/${category.slug}`} class="w-full text-left">
+                                    <span>{category.name}</span>
+                                </a>
+                            </Button>
+                        {/each}
+                    {/if}
                 </nav>
                 <!-- User Actions -->
                 <div class="border-t border-gray-200 py-4 px-4 mt-auto">

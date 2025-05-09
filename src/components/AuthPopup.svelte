@@ -64,6 +64,20 @@
 
                 // Update the user store
                 updateUser(data.user);
+                
+                // Save the token for both client and server-side authentication
+                if (data.session?.access_token) {
+                    const { setToken } = await import("$lib/stores/authStore");
+                    
+                    // Set the token in localStorage and as a cookie
+                    setToken(
+                        data.session.access_token,
+                        data.session.refresh_token || null
+                    );
+                    
+                    console.log("Auth tokens saved successfully");
+                }
+                
                 onClose();
             } else {
                 // Sign up with email and password

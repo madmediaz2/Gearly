@@ -8,12 +8,36 @@
     import CartPopup from "./CartPopup.svelte";
     import { type PopupControls } from "$lib/types/popupTypes";
     import Button from "./ui/Button.svelte";
+    import { onMount } from "svelte";
+    import { isAdmin } from "$lib/stores/authStore";
+    import { 
+        categories as categoriesStore, 
+        isCategoriesLoading, 
+        categoriesError,
+        loadAllCategories 
+    } from "$lib/stores/categoryStore";
+    import type { Category } from "$lib/stores/categoryStore";
+    import { getToken, getRefreshToken } from "$lib/stores/authStore";
 
     let searchQuery = $state("");
     let sheetOpen = $state(false);
     let authPopupOpen = $state(false);
     let accountPopUpOpen = $state(false);
     let cartPopupOpen = $state(false);
+    let categories = $state<Category[]>([]);
+    
+    // Subscribe to the store values
+    $effect(() => {
+        categories = $categoriesStore;
+    });
+    
+    onMount(async () => {
+        try {
+            await loadAllCategories();
+        } catch (err) {
+            console.error("Failed to load categories:", err);
+        }
+    });
 
     function toggleSheet() {
         sheetOpen = !sheetOpen;
@@ -48,6 +72,47 @@
 
     function closeCartPopUp() {
         cartPopupOpen = false;
+    }
+
+    function handleAdminNavigation(e: Event) {
+        e.preventDefault();
+        
+        // Get both the access and refresh tokens
+        const accessToken = getToken();
+        const refreshToken = getRefreshToken();
+        
+        if (!accessToken) {
+            console.error("No valid access token found");
+            return;
+        }
+        
+        // Store both tokens in localStorage for our server hooks to retrieve
+        localStorage.setItem('supabase_access_token', accessToken);
+        if (refreshToken) {
+            localStorage.setItem('supabase_refresh_token', refreshToken);
+        }
+        
+        // Set cookies for server-side authentication
+        document.cookie = `supabase-auth-token=${accessToken}; path=/; max-age=3600; SameSite=Lax`;
+        
+        // Make a fetch request with the Authorization header first to validate authorization
+        fetch('/admin/products', {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        })
+        .then(response => {
+            if (response.ok || response.redirected) {
+                // If authorization is successful, navigate to admin page
+                window.location.href = '/admin/products';
+            } else {
+                console.error('Access denied to admin page');
+                alert('You do not have permission to access the admin page');
+            }
+        })
+        .catch(err => {
+            console.error('Error checking admin access:', err);
+        });
     }
 
     const popupControls: PopupControls = {
@@ -91,7 +156,7 @@
     });
 </script>
 
-<nav class="flex flex-col">
+{#snippet TopNavbar()}
     <div
         class="sm:flex-row flex items-center justify-between flex-row-reverse bg-gray-100 p-2 border-b border-gray-300"
     >
@@ -115,73 +180,93 @@
             </Button>
         </div>
 
-        <MobileSheet {sheetOpen} {toggleSheet} {popupControls} {onLogout} />
+        <MobileSheet 
+            {sheetOpen} 
+            {toggleSheet} 
+            {popupControls} 
+            {onLogout} 
+            {categories}
+            isLoading={$isCategoriesLoading}
+            error={$categoriesError}
+        />
 
         <!-- Right section Shopping Icon & Account Avatar -->
-        <div class="hidden sm:flex items-centery79 flex-row gap-3 pl-3">
-            <CartPopup isOpen={cartPopupOpen} onClose={closeCartPopUp} />
-            <Button variant="icon" onclick={toggleCartPopUp}>
+        {@render UserControls()}
+    </div>
+{/snippet}
+
+{#snippet UserControls()}
+    <div class="hidden sm:flex items-centery79 flex-row gap-3 pl-3">
+        <CartPopup isOpen={cartPopupOpen} onClose={closeCartPopUp} />
+        <Button variant="icon" onclick={toggleCartPopUp}>
+            <img
+                src="/shopping_cart.svg"
+                alt="Shopping Cart"
+                class="w-10 h-10 white"
+            />
+        </Button>
+        {#if !$user}
+            <AuthPopup isOpen={authPopupOpen} onClose={closeAuthPopup} />
+            <Button variant="icon" onclick={toggleAuthPopup}>
                 <img
-                    src="/shopping_cart.svg"
-                    alt="Shopping Cart"
+                    src="/avatar.svg"
+                    alt="Login"
                     class="w-10 h-10 white"
                 />
             </Button>
-            {#if !$user}
-                <AuthPopup isOpen={authPopupOpen} onClose={closeAuthPopup} />
-                <Button variant="icon" onclick={toggleAuthPopup}>
-                    <img
-                        src="/avatar.svg"
-                        alt="Login"
-                        class="w-10 h-10 white"
-                    />
-                </Button>
-            {:else}
-                <AccountPopup
-                    isOpen={accountPopUpOpen}
-                    onClose={closeAccountPopUp}
-                    {onLogout}
+        {:else}
+            <AccountPopup
+                isOpen={accountPopUpOpen}
+                onClose={closeAccountPopUp}
+                {onLogout}
+            />
+            <Button variant="icon" onclick={toggleAccountPopUp}>
+                <img
+                    src="/avatar.svg"
+                    alt="Account Centrum"
+                    class="w-10 h-10 white"
                 />
-                <Button variant="icon" onclick={toggleAccountPopUp}>
-                    <img
-                        src="/avatar.svg"
-                        alt="Account Centrum"
-                        class="w-10 h-10 white"
-                    />
-                </Button>
-            {/if}
-        </div>
+            </Button>
+        {/if}
     </div>
+{/snippet}
 
+{#snippet CategoryNavbar()}
     <!-- Bottom Section -->
     <nav
         class="hidden sm:flex items-center justify-between flex-row bg-gray-100 p-1 border-b border-gray-300 px-10 transition-all duration-300 ease-in-out"
     >
-        <Button variant="navigation">
-            <div class="flex flex-row">
-                <img src="/menu.svg" alt="menu" />
-                <span>Categorieen</span>
-            </div>
-        </Button>
-        <Button variant="navigation">
-            <span>Aanbiedingen</span>
-        </Button>
-        <Button variant="navigation">
-            <span>Laptops</span>
-        </Button>
-        <Button variant="navigation">
-            <span>Desktops</span>
-        </Button>
-        <Button variant="navigation">
-            <span>Tweede Kans</span>
-        </Button>
-        <Button variant="navigation">
-            <span>Mobiel</span>
-        </Button>
-        <Button variant="navigation">
-            <a href="/admin/products" class="text-gray-900 hover:text-gray-700">
-                <span>Admin</span>
-            </a>
-        </Button>
+        <!-- Dynamic categories loaded from database -->
+        {#if $isCategoriesLoading}
+            <span class="text-gray-400">Loading categories...</span>
+        {:else if $categoriesError}
+            <span class="text-red-500">Error: {$categoriesError}</span>
+        {:else}
+            {#each categories as category}
+                <Button variant="navigation">
+                    <a href={`/categories/${category.name}`} class="text-gray-900 hover:text-gray-700">
+                        <span>{category.name}</span>
+                    </a>
+                </Button>
+            {/each}
+        {/if}
+        
+        <!-- Admin Button - Only visible for admin users -->
+        {#if $user && $isAdmin}
+            <Button variant="navigation">
+                <a 
+                    href="/admin/products" 
+                    class="text-gray-900 hover:text-gray-700"
+                    onclick={handleAdminNavigation}
+                >
+                    <span>Admin</span>
+                </a>
+            </Button>
+        {/if}
     </nav>
+{/snippet}
+
+<nav class="flex flex-col">
+    {@render TopNavbar()}
+    {@render CategoryNavbar()}
 </nav>

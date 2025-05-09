@@ -8,16 +8,21 @@
 
     onMount(async () => {
         try {
-            // Handle the OAuth callback
             const { data, error: authError } = await supabase.auth.getSession();
 
             if (authError) throw authError;
 
             if (data?.session?.user) {
-                // Update the user store with the authenticated user
                 updateUser(data.session.user);
 
-                // Redirect to the homepage or dashboard after successful authentication
+                if (data.session?.access_token) {
+                    const { setToken } = await import("$lib/stores/authStore");
+                    setToken(
+                        data.session.access_token,
+                        data.session.refresh_token || null
+                    );
+                }
+
                 goto("/");
             } else {
                 throw new Error("No user session found");
@@ -36,8 +41,7 @@
         {#if error}
             <div class="p-4 mb-4 bg-red-100 text-red-700 rounded-md">
                 <p>{error}</p>
-                <a href="/" class="mt-4 text-black underline">Terug naar home</a
-                >
+                <a href="/" class="mt-4 text-black underline">Terug naar home</a>
             </div>
         {:else}
             <div class="text-center">

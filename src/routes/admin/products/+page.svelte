@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { page } from "$app/stores";
     import type { ProductItem } from "$lib/types/supabaseTypes";
     import { loadShopItems } from "$lib/stores/shopItemStore";
     import Button from "../../../components/ui/Button.svelte";
@@ -7,52 +8,50 @@
     import BrandManager from "../../../components/admin/BrandManager.svelte";
     import CategoryManager from "../../../components/admin/CategoryManager.svelte";
     import AttributeManager from "../../../components/admin/AttributeManager.svelte";
-    
-    // State management
+
+    const userData = $page.data.user;
+
     let products = $state<ProductItem[]>([]);
     let isLoading = $state(true);
     let error = $state<string | null>(null);
     let selectedProduct = $state<ProductItem | null>(null);
     let isCreating = $state(false);
-    
-    // Tab management
+
     type Tab = 'product' | 'specifications' | 'brand' | 'category' | 'attributes';
     let activeTab = $state<Tab>('product');
-    
+
     function switchTab(tab: Tab) {
         if (tab === 'specifications' && (!selectedProduct || isCreating)) {
             return;
         }
         activeTab = tab;
     }
-    
+
     onMount(async () => {
         await loadProducts(false);
     });
-    
+
     async function loadProducts(onMount: boolean = true) {
         isLoading = true;
         error = null;
         try {
             products = await loadShopItems(onMount);
         } catch (err: any) {
-            console.error('Error loading products:', err);
             error = err.message || 'Failed to load products';
         } finally {
             isLoading = false;
         }
     }
-    
+
     function selectProduct(product: ProductItem) {
         selectedProduct = { ...product };
         isCreating = false;
         activeTab = 'product';
     }
-    
+
     function startCreatingProduct() {
-        // Create an empty product template
         selectedProduct = {
-            id: 0, // Will be assigned by DB
+            id: 0,
             name: '',
             price: 0,
             quantity: 1,
@@ -82,7 +81,6 @@
                 Add New Product
             </Button>
         </div>
-        
         {#if isLoading}
             <div class="flex justify-center items-center py-10">
                 <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-gray-900"></div>
@@ -99,7 +97,6 @@
             <div class="overflow-y-auto max-h-[calc(100vh-240px)]">
                 <ul class="divide-y divide-gray-200">
                     {#each products as product (product.id)}
-                        <!-- svelte-ignore a11y_click_events_have_key_events --><!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
                         <li 
                             class="py-3 px-2 hover:bg-gray-100 cursor-pointer {selectedProduct?.id === product.id ? 'bg-gray-100' : ''}"
                             onclick={() => selectProduct(product)}
@@ -134,7 +131,6 @@
         >
             {isCreating ? 'Add New Product' : (selectedProduct ? 'Edit Product' : 'Products')}
         </Button>
-        
         <Button
             variant="tab"
             className={activeTab === 'brand' ? 'border-b-2 border-blue-500 font-medium' : ''}
@@ -142,7 +138,6 @@
         >
             Brands
         </Button>
-        
         <Button
             variant="tab"
             className={activeTab === 'category' ? 'border-b-2 border-blue-500 font-medium' : ''}
@@ -150,7 +145,6 @@
         >
             Categories
         </Button>
-        
         <Button
             variant="tab"
             className={activeTab === 'attributes' ? 'border-b-2 border-blue-500 font-medium' : ''}
@@ -195,8 +189,12 @@
 {/snippet}
 
 <div class="container mx-auto p-4">
-    <h1 class="text-2xl font-bold mb-6">Product Management</h1>
-    
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Product Management</h1>
+        <div class="text-gray-600">
+            Admin: {userData?.email || 'Admin User'}
+        </div>
+    </div>
     <div class="flex flex-col md:flex-row gap-6">
         <!-- Left side: List of products -->
         {@render ProductsList()}

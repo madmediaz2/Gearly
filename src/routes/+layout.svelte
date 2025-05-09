@@ -22,7 +22,25 @@
         if (browser) {
             // Initialize auth which handles JWT token validation
             await initializeAuth();
-            await supabase.auth.setSession({access_token: getToken() || '', refresh_token: getRefreshToken() || '' })
+            
+            // Get tokens from our stores after initialization
+            const accessToken = getToken();
+            const refreshToken = getRefreshToken();
+            
+            // Only set session if we have a token
+            if (accessToken) {
+                console.log('Setting Supabase session with stored tokens');
+                await supabase.auth.setSession({
+                    access_token: accessToken, 
+                    refresh_token: refreshToken || ''
+                });
+                
+                // Verify session is active
+                const { data, error } = await supabase.auth.getSession();
+                if (data?.session) {
+                    console.log('Session verified successfully');
+                }
+            }
         }
     });
 </script>

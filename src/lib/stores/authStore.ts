@@ -14,99 +14,109 @@ export const adminCheckError = writable<string | null>(null);
 
 // Get the current access token value
 export function getToken(): string | null {
-    return get(token);
+	return get(token);
 }
 
 // Get the current refresh token value
 export function getRefreshToken(): string | null {
-    return get(refreshToken);
+	return get(refreshToken);
 }
 
 // Set a new token value
 export function setToken(newToken: string | null, newRefreshToken: string | null = null): void {
-    token.set(newToken);
-    if (newRefreshToken !== null) {
-        refreshToken.set(newRefreshToken);
-    }
-    
-    if (typeof localStorage !== 'undefined') {
-        if (newToken) {
-            localStorage.setItem('supabase_access_token', newToken);
-            
-            // Also set a cookie for server-side authentication
-            document.cookie = `supabase-auth-token=${newToken}; path=/; max-age=3600; SameSite=Lax`;
-        } else {
-            localStorage.removeItem('supabase_access_token');
-            
-            // Clear the cookie when logging out
-            document.cookie = 'supabase-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-        }
-        
-        if (newRefreshToken) {
-            localStorage.setItem('supabase_refresh_token', newRefreshToken);
-        } else if (newRefreshToken === null && !newToken) {
-            // Only clear refresh token if explicitly passing null and clearing access token
-            localStorage.removeItem('supabase_refresh_token');
-        }
-    }
+	token.set(newToken);
+	if (newRefreshToken !== null) {
+		refreshToken.set(newRefreshToken);
+	}
+
+	if (typeof localStorage !== 'undefined') {
+		if (newToken) {
+			localStorage.setItem('supabase_access_token', newToken);
+			
+			// Ensure we're consistently using the same key
+			localStorage.removeItem('supabase_auth_token'); // Remove old key if it exists
+
+			// Also set a cookie for server-side authentication
+			document.cookie = `supabase-auth-token=${newToken}; path=/; max-age=86400; SameSite=Lax`;
+		} else {
+			localStorage.removeItem('supabase_access_token');
+			localStorage.removeItem('supabase_auth_token'); // Remove old key if it exists
+
+			// Clear the cookie when logging out
+			document.cookie = 'supabase-auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+		}
+
+		if (newRefreshToken) {
+			localStorage.setItem('supabase_refresh_token', newRefreshToken);
+		} else if (newRefreshToken === null && !newToken) {
+			// Only clear refresh token if explicitly passing null and clearing access token
+			localStorage.removeItem('supabase_refresh_token');
+		}
+	}
 }
 
 export async function initializeAuth() {
-    try {
-        isLoading.set(true);
-        
-        // Check if we have a stored JWT token
-        let savedToken: string | null = null;
-        
-        if (typeof localStorage !== 'undefined') {
-            // Try to get token from localStorage
-            savedToken = localStorage.getItem('supabase_auth_token') || localStorage.getItem('supabase_access_token');
-            
-            // If not in localStorage, try to get it from cookies
-            if (!savedToken && typeof document !== 'undefined') {
-                const cookieMatch = document.cookie.match(/supabase-auth-token=([^;]+)/);
-                if (cookieMatch && cookieMatch[1]) {
-                    savedToken = cookieMatch[1];
-                    console.log('Found saved JWT token in cookies');
-                }
-            }
-            
-            if (savedToken) {
-                console.log('Found saved JWT token');
-                setToken(savedToken);
-                
-                // Verify the token and get user info
-                try {
-                    const { data: { user: currentUser }, error } = await supabase.auth.getUser(savedToken);
-                    
-                    if (error || !currentUser) {
-                        console.error('Invalid stored JWT token:', error);
-                        setToken(null);
-                    } else {
-                        // Valid token with user info
-                        console.log('Valid stored JWT token - user authenticated');
-                        user.set(currentUser);
-                        
-                        // Check admin status
-                        if (currentUser) {
-                            await checkAdminStatus(currentUser.id);
-                        }
-                    }
-                } catch (err) {
-                    console.error('Error validating stored JWT token:', err);
-                    setToken(null);
-                }
-            }
-        }
-        
-    } catch (error) {
-        console.error('Error in initializeAuth:', error);
-        user.set(null);
-        setToken(null);
-        isAdmin.set(false);
-    } finally {
-        isLoading.set(false);
-    }
+	try {
+		isLoading.set(true);
+
+		// Check if we have a stored JWT token
+		let savedToken: string | null = null;
+
+		if (typeof localStorage !== 'undefined') {
+			// Try to get token from localStorage - note we use 'supabase_access_token' consistently
+			savedToken = localStorage.getItem('supabase_access_token');
+
+			// If not in localStorage, try to get it from cookies
+			if (!savedToken && typeof document !== 'undefined') {
+				const cookieMatch = document.cookie.match(/supabase-auth-token=([^;]+)/);
+				if (cookieMatch && cookieMatch[1]) {
+					savedToken = cookieMatch[1];
+					console.log('Found saved JWT token in cookies');
+				}
+			}
+
+			if (savedToken) {
+				console.log('Found saved JWT token');
+				setToken(savedToken);
+
+				// Verify the token and get user info
+				try {
+					const { data: { user: currentUser }, error } = await supabase.auth.getUser(savedToken);
+
+					if (error || !currentUser) {
+						console.error('Invalid stored JWT token:', error);
+						setToken(null);
+					} else {
+						// Valid token with user info
+						console.log('Valid stored JWT token - user authenticated');
+						user.set(currentUser);
+						
+						// Also refresh the tokens in localStorage and store
+						if (savedToken) {
+							// Make sure token is set in both localStorage and store
+							setToken(savedToken);
+						}
+
+						// Check admin status
+						if (currentUser) {
+							await checkAdminStatus(currentUser.id);
+						}
+					}
+				} catch (err) {
+					console.error('Error validating stored JWT token:', err);
+					setToken(null);
+				}
+			}
+		}
+
+	} catch (error) {
+		console.error('Error in initializeAuth:', error);
+		user.set(null);
+		setToken(null);
+		isAdmin.set(false);
+	} finally {
+		isLoading.set(false);
+	}
 }
 
 export const updateUser = (newUser: User | null) => {
@@ -118,7 +128,7 @@ export const signOut = async () => {
 	setToken(null);
 	user.set(null);
 	isAdmin.set(false);
-	
+
 	// Also sign out from Supabase
 	try {
 		await supabase.auth.signOut();
@@ -153,14 +163,14 @@ export const getUsername = (): string | null => {
 export async function logout(): Promise<void> {
 	// Reset the user store to null
 	user.set(null);
-	
+
 	// Reset admin status
 	isAdmin.set(false);
 	adminCheckError.set(null);
 
 	// Clear the JWT token
 	setToken(null);
-	
+
 	// Sign out from Supabase
 	try {
 		await supabase.auth.signOut();
@@ -212,47 +222,47 @@ export async function changeUserImage(newImageUrl: string): Promise<void> {
  * @param userId The user ID to check
  */
 export async function checkAdminStatus(userId: string): Promise<boolean> {
-    if (!userId) {
-        console.error('Invalid user ID provided to checkAdminStatus');
-        isAdmin.set(false);
-        adminCheckError.set('Invalid user ID');
-        return false;
-    }
+	if (!userId) {
+		console.error('Invalid user ID provided to checkAdminStatus');
+		isAdmin.set(false);
+		adminCheckError.set('Invalid user ID');
+		return false;
+	}
 
-    try {
-        isAdminLoading.set(true);
-        adminCheckError.set(null);
-        
-        const { data, error } = await supabase
-            .from('user_roles')
-            .select('is_admin')
-            .eq('user_id', userId)
-            .maybeSingle();
-            
-        if (error) {
-            console.error('Error checking admin status:', error);
-            adminCheckError.set(error.message);
-            isAdmin.set(false);
-            return false;
-        }
-        
-        // If no role entry exists, user is not an admin
-        if (!data) {
-            isAdmin.set(false);
-            return false;
-        }
-        
-        const hasAdminRole = Boolean(data.is_admin);
-        isAdmin.set(hasAdminRole);
-        return hasAdminRole;
-    } catch (error) {
-        console.error('Error in admin status check:', error);
-        adminCheckError.set(error instanceof Error ? error.message : 'Unknown error checking admin status');
-        isAdmin.set(false);
-        return false;
-    } finally {
-        isAdminLoading.set(false);
-    }
+	try {
+		isAdminLoading.set(true);
+		adminCheckError.set(null);
+
+		const { data, error } = await supabase
+			.from('user_roles')
+			.select('is_admin')
+			.eq('user_id', userId)
+			.maybeSingle();
+
+		if (error) {
+			console.error('Error checking admin status:', error);
+			adminCheckError.set(error.message);
+			isAdmin.set(false);
+			return false;
+		}
+
+		// If no role entry exists, user is not an admin
+		if (!data) {
+			isAdmin.set(false);
+			return false;
+		}
+
+		const hasAdminRole = Boolean(data.is_admin);
+		isAdmin.set(hasAdminRole);
+		return hasAdminRole;
+	} catch (error) {
+		console.error('Error in admin status check:', error);
+		adminCheckError.set(error instanceof Error ? error.message : 'Unknown error checking admin status');
+		isAdmin.set(false);
+		return false;
+	} finally {
+		isAdminLoading.set(false);
+	}
 }
 
 /**
@@ -260,7 +270,7 @@ export async function checkAdminStatus(userId: string): Promise<boolean> {
  * @returns Current admin status (true if user is admin)
  */
 export function getAdminStatus(): boolean {
-    return get(isAdmin);
+	return get(isAdmin);
 }
 
 /**

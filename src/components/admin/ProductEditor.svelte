@@ -32,6 +32,7 @@
     let selectedBrandId = $state<number | null>(null);
     let selectedCategoryId = $state<number | null>(null);
     let imageFiles = $state<FileList | null>(null);
+    let isUploadingImages = $state(false);
     let formValid = $derived(
         !!product.name && product.price > 0 && product.stock >= 0,
     );
@@ -112,12 +113,28 @@
                 selectedBrandId,
             );
 
+            // Handle image uploads if any
             if (imageFiles && imageFiles.length > 0) {
-                await uploadProductImages(
-                    savedProduct.id,
-                    imageFiles,
-                    product.name,
-                );
+                isUploadingImages = true;
+                
+                try {
+                    const uploadResult = await uploadProductImages(
+                        savedProduct.id,
+                        imageFiles,
+                        product.name,
+                    );
+                    
+                    // Reset file input after upload is complete
+                    imageFiles = null;
+                    
+                    // Show any upload errors
+                    if (uploadResult.errors.length > 0) {
+                        // Show the errors but don't fail the whole operation
+                        errorMessage = `Product saved but encountered issues with ${uploadResult.errors.length} image(s): ${uploadResult.errors.join("; ")}`;
+                    }
+                } finally {
+                    isUploadingImages = false;
+                }
             }
 
             if (selectedCategoryId) {
@@ -339,14 +356,46 @@
         </label>
         <input
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/gif"
             multiple
             bind:files={imageFiles}
             class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black"
+            disabled={isLoading || isUploadingImages}
         />
         <p class="text-xs text-gray-500 mt-1">
-            Upload one or more images for this product
+            Upload one or more images for this product (max 5MB each, formats: JPEG, PNG, WebP, GIF)
         </p>
+        
+        {#if isUploadingImages}
+            <div class="mt-2 flex items-center space-x-2">
+                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
+                <p class="text-sm">Uploading images...</p>
+            </div>
+        {/if}
+        
+        {#if imageFiles && imageFiles.length > 0}
+            <div class="mt-2 grid grid-cols-2 md:grid-cols-3 gap-2">
+                {#each Array.from(imageFiles) as file, i}
+                    <div class="relative group">
+                        <img
+                            src={URL.createObjectURL(file)}
+                            alt={`Preview ${i + 1}`}
+                            class="w-full h-24 object-cover rounded-md"
+                        />
+                        <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <p class="text-white text-xs px-1 truncate max-w-full">{file.name}</p>
+                        </div>
+                    </div>
+                {/each}
+            </div>
+            <button 
+                type="button" 
+                class="mt-2 text-sm text-red-600 hover:text-red-800"
+                onclick={() => { imageFiles = null; }}
+            >
+                Clear selected images
+            </button>
+        {/if}
     </div>
 
     <!-- Existing Images Gallery -->
@@ -355,7 +404,14 @@
             <h3 class="text-sm font-medium text-gray-700 mb-2">
                 Current Images
             </h3>
-            <div class="grid grid-cols-2 gap-2">
+
+            <div class="mt-4 mb-2">
+                <h3 class="text-sm font-medium text-gray-700 mb-2">
+                    Manage Images
+                </h3>
+            </div>
+            
+            <div class="mt-2 grid grid-cols-2 gap-2">
                 {#each product.product_images as image}
                     <div class="relative group">
                         <img

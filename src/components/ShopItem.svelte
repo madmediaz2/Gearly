@@ -37,7 +37,6 @@
                     alt={capitalizeFirstLetter(item.name)}
                     class="max-w-full max-h-full object-contain rounded-md"
                     onerror={(e) => {
-                        // Handle image loading errors by using a placeholder
                         const imgElement = e.target as HTMLImageElement;
                         imgElement.src = "/placeholder.png";
                         console.warn(`Failed to load image for product ${item.id}: ${item.name}`);

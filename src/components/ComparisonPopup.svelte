@@ -3,11 +3,13 @@
     import { fly } from 'svelte/transition';
     import { cubicOut } from 'svelte/easing';
     import { goto } from '$app/navigation';
+    import { onMount, onDestroy } from 'svelte';
     import type { ProductItem } from '$lib/types/supabaseTypes';
     import Button from './ui/Button.svelte';
     
     let expanded = false;
     let comparisonItems: ProductItem[] = [];
+    let popupElement: HTMLDivElement;
     
     // Subscribe to the comparison items
     comparisonStore.subscribe((state) => {
@@ -26,12 +28,28 @@
     function removeItem(id: number) {
         comparisonStore.removeFromComparison(id);
     }
+    
+    // Handle click outside to close popup
+    function handleClickOutside(event: MouseEvent) {
+        if (expanded && popupElement && !popupElement.contains(event.target as Node)) {
+            expanded = false;
+        }
+    }
+    
+    onMount(() => {
+        document.addEventListener('click', handleClickOutside);
+    });
+    
+    onDestroy(() => {
+        document.removeEventListener('click', handleClickOutside);
+    });
 </script>
 
 {#if $comparisonCount > 0}
     <div class="fixed bottom-4 right-4 z-50">
         {#if expanded}
             <div 
+                bind:this={popupElement}
                 class="bg-black shadow-lg rounded-lg p-4 flex flex-col items-center text-white"
                 transition:fly={{ y: 20, duration: 300, easing: cubicOut }}
             >

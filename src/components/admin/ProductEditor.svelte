@@ -80,9 +80,20 @@
 
     async function findProductCategory() {
         try {
+            console.log(`ProductEditor: Finding category for product ID ${product.id}`);
             const category = await getProductCategory(product.id);
+            
             if (category) {
+                console.log('ProductEditor: Found category:', category);
                 selectedCategoryId = category.id;
+            } else if (product.category) {
+                console.log(`ProductEditor: Using product.category: ${product.category}`);
+                const matchingCategory = categories.find(
+                    c => c.name.toLowerCase() === product.category?.toLowerCase()
+                );
+                
+                    selectedCategoryId = matchingCategory?.id || null;
+
             }
         } catch (err) {
             console.error("Error finding product category:", err);
@@ -113,6 +124,7 @@
             }
 
             if (selectedCategoryId) {
+                console.log(`ProductEditor: Updating product ${savedProduct.id} with category ID ${selectedCategoryId}`);
                 await updateProductCategory(
                     savedProduct.id,
                     selectedCategoryId,
@@ -171,6 +183,19 @@
         } finally {
             isLoading = false;
         }
+    }
+
+    function getCurrentCategoryDisplay(): string {
+        if (selectedCategoryId) {
+            const category = categories.find(c => c.id === selectedCategoryId);
+            if (category) return category.name;
+        }
+        
+        if (product.category) {
+            return product.category;
+        }
+        
+        return 'None';
     }
 </script>
 
@@ -273,7 +298,7 @@
             for="product-category"
             class="block text-sm font-medium text-gray-700 mb-1"
         >
-            Category
+            Category {!isNew ? `(Current: ${getCurrentCategoryDisplay()})` : ''}
         </label>
         <select
             id="product-category"
@@ -282,9 +307,16 @@
         >
             <option value={null}>No Category</option>
             {#each categories as category}
-                <option value={category.id}>{category.name}</option>
+                <option value={category.id} selected={product.category === category.name || selectedCategoryId === category.id}>
+                    {category.name}
+                </option>
             {/each}
         </select>
+        {#if product.category && !selectedCategoryId && categories.length > 0}
+            <p class="text-xs text-amber-600 mt-1">
+                Current category "{product.category}" does not match any available category.
+            </p>
+        {/if}
     </div>
 {/snippet}
 

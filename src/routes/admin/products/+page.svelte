@@ -3,6 +3,7 @@
     import { page } from "$app/stores";
     import type { ProductItem } from "$lib/types/supabaseTypes";
     import { loadShopItems } from "$lib/stores/shopItemStore";
+    import { refreshAllStores } from "$lib/utils/refreshStores";
     import Button from "../../../components/ui/Button.svelte";
     import ProductEditor from "../../../components/admin/ProductEditor.svelte";
     import BrandManager from "../../../components/admin/BrandManager.svelte";
@@ -16,6 +17,11 @@
     let error = $state<string | null>(null);
     let selectedProduct = $state<ProductItem | null>(null);
     let isCreating = $state(false);
+    let isRefreshing = $state(false);
+    let refreshMessage = $state<{
+        type: "success" | "error";
+        text: string;
+    } | null>(null);
 
     type Tab =
         | "product"
@@ -72,6 +78,30 @@
         };
         isCreating = true;
         activeTab = "product";
+    }
+
+    async function handleRefreshStores() {
+        isRefreshing = true;
+        refreshMessage = null;
+
+        try {
+            await refreshAllStores();
+            await loadProducts(true);
+            refreshMessage = {
+                type: "success",
+                text: "All stores refreshed successfully!",
+            };
+            setTimeout(() => {
+                refreshMessage = null;
+            }, 8000);
+        } catch (err: any) {
+            refreshMessage = {
+                type: "error",
+                text: err.message || "Failed to refresh stores",
+            };
+        } finally {
+            isRefreshing = false;
+        }
     }
 </script>
 
@@ -215,8 +245,30 @@
 <div class="container mx-auto p-4">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold">Product Management</h1>
-        <div class="text-gray-600">
-            Admin: {userData?.email || "Admin User"}
+        <div class="flex items-center gap-4">
+            {#if refreshMessage}
+                <div
+                    class={`text-sm p-2 rounded ${refreshMessage.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
+                >
+                    {refreshMessage.text}
+                </div>
+            {/if}
+            <div class="text-gray-600">
+                Admin: {userData?.email || "Admin User"}
+            </div>
+            <Button
+                variant="secondary"
+                onclick={handleRefreshStores}
+                disabled={isRefreshing}
+                className={isRefreshing ? "opacity-70 cursor-not-allowed" : ""}
+            >
+                {#if isRefreshing}
+                    Refreshing...
+                {:else}
+                    Refresh All Stores
+                {/if}
+            </Button>
+            <div></div>
         </div>
     </div>
     <div class="flex flex-col md:flex-row gap-6">

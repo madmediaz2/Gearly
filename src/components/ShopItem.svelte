@@ -31,11 +31,23 @@
         class="border border-gray-200 rounded-lg overflow-hidden w-3xs flex flex-col bg-white shadow-md pointer-events-auto cursor-pointer"
     >
         <figure class="h-44 flex justify-center items-center p-4 bg-white">
-            <img
-                src={item.image_url || item.image}
-                alt={capitalizeFirstLetter(item.name)}
-                class="max-w-full max-h-full object-contain rounded-md"
-            />
+            {#if item.image_url || item.image}
+                <img
+                    src={item.image_url || item.image}
+                    alt={capitalizeFirstLetter(item.name)}
+                    class="max-w-full max-h-full object-contain rounded-md"
+                    onerror={(e) => {
+                        // Handle image loading errors by using a placeholder
+                        const imgElement = e.target as HTMLImageElement;
+                        imgElement.src = "/placeholder.png";
+                        console.warn(`Failed to load image for product ${item.id}: ${item.name}`);
+                    }}
+                />
+            {:else}
+                <div class="w-full h-full flex items-center justify-center bg-gray-100 rounded-md">
+                    <span class="text-gray-400">No image</span>
+                </div>
+            {/if}
         </figure>
 
         <div class="p-3 px-4">

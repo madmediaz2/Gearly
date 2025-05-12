@@ -4,14 +4,16 @@
     import Input from "../ui/Input.svelte";
     import NotificationMessage from "../ui/NotificationMessage.svelte";
     import {
-        fetchSpecificationAttributes,
-        createSpecificationAttribute,
-        deleteSpecificationAttribute,
-    } from "$lib/api/specificationsApi";
+        attributes,
+        isAttributesLoading,
+        attributesError,
+        loadAllAttributes,
+        createAttribute,
+        deleteAttribute as deleteAttributeStore
+    } from "$lib/stores/specificationAttributeStore";
     import type { SpecificationAttribute } from "$lib/types/supabaseTypes";
 
     // State variables
-    let attributes = $state<SpecificationAttribute[]>([]);
     let loading = $state(true);
     let error = $state<string | null>(null);
     let success = $state<string | null>(null);
@@ -21,17 +23,27 @@
     let newAttributeSlug = $state<string>("");
     let newAttributeUnit = $state<string>("");
     let creatingAttribute = $state(false);
-
-    onMount(async () => {
-        await loadAttributes();
+    
+    let attributesList = $derived($attributes);
+    let isLoading = $derived($isAttributesLoading);
+    let storeError = $derived($attributesError);
+    
+    $effect(() => {
+        if (storeError) {
+            error = storeError;
+        }
     });
 
-    async function loadAttributes() {
+    onMount(async () => {
+        await loadAttributes(true);
+    });
+
+    async function loadAttributes(onMount = false) {
         try {
             loading = true;
             error = null;
-
-            attributes = await fetchSpecificationAttributes();
+            
+            await loadAllAttributes(!onMount); // Force refresh to get latest data
         } catch (err: any) {
             error = err.message || "Failed to load attributes";
             console.error(error);
@@ -52,14 +64,11 @@
 
         try {
             // Create the new attribute
-            const newAttribute = await createSpecificationAttribute({
+            await createAttribute({
                 name: newAttributeName.trim(),
                 slug: newAttributeSlug.trim() || undefined,
                 unit: newAttributeUnit.trim() || null,
             });
-
-            // Add to attributes list
-            attributes = [...attributes, newAttribute];
 
             // Reset form
             newAttributeName = "";
@@ -88,12 +97,11 @@
             error = null;
             success = null;
 
-            await deleteSpecificationAttribute(attributeId);
-
-            // Remove from local list
-            attributes = attributes.filter((attr) => attr.id !== attributeId);
-
-            success = "Attribute deleted successfully";
+            const result = await deleteAttributeStore(attributeId);
+            
+            if (result.success) {
+                success = "Attribute deleted successfully";
+            }
         } catch (err: any) {
             error = err.message || "Failed to delete attribute";
             console.error(error);
@@ -212,7 +220,7 @@
     <NotificationMessage message={error} type="error" />
     <NotificationMessage message={success} type="success" />
 
-    {#if loading}
+    {#if isLoading || loading}
         <p class="py-2">Loading attributes...</p>
     {:else}
         <!-- Create new attribute -->
@@ -222,7 +230,7 @@
 
         <!-- Attributes list -->
         <div>
-            {@render AttributesTable(attributes)}
+            {@render AttributesTable(attributesList)}
         </div>
     {/if}
 </div>

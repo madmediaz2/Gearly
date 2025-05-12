@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Configure with proper cookie options to fix auth issues
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
         persistSession: true,
@@ -34,5 +33,4 @@ export const createAdminClient = () => {
 
 export const supabaseAdmin = createAdminClient();
 
-// Export commonly used API functions for convenience
 export * from './api/supabaseApi';

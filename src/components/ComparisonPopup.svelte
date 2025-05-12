@@ -1,6 +1,7 @@
 <script lang="ts">
     import { comparisonStore, comparisonCount } from '$lib/stores/comparisonStore';
     import { goto } from '$app/navigation';
+    import { page } from '$app/stores';
     import type { ProductItem } from '$lib/types/supabaseTypes';
     import Button from './ui/Button.svelte';
     import Popup from './ui/Popup.svelte';
@@ -9,16 +10,30 @@
     let expanded = $state(false);
     let comparisonItems = $state<ProductItem[]>([]);
     let isMobileSheetOpen = $state(false);
+    let isCompareRoute = $state(false);
+    let itemsInComparison = $derived($comparisonCount == 0)
     
-    // Subscribe to the comparison items
     comparisonStore.subscribe((state) => {
         comparisonItems = state.items;
     });
     
+    $effect(() => {
+        isCompareRoute = $page.url.pathname === '/compare';
+        
+        if (isCompareRoute && expanded) {
+            expanded = false;
+        }
+    });
+
+    $effect(() => {
+        if(itemsInComparison){
+            expanded = false;
+        }
+    })
+    
     // Subscribe to sheetOpen state
     sheetOpenStore.subscribe(value => {
         isMobileSheetOpen = value;
-        // Close comparison popup if MobileSheet is opened
         if (value && expanded) {
             expanded = false;
         }
@@ -38,7 +53,7 @@
     }
 </script>
 
-{#if $comparisonCount > 0 && !isMobileSheetOpen}
+{#if $comparisonCount > 0 && !isMobileSheetOpen && !isCompareRoute}
     <div class="fixed bottom-4 right-4 z-50">
         {#if !expanded}
             <Button 

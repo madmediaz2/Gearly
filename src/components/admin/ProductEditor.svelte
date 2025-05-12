@@ -80,14 +80,11 @@
 
     async function findProductCategory() {
         try {
-            console.log(`ProductEditor: Finding category for product ID ${product.id}`);
             const category = await getProductCategory(product.id);
             
             if (category) {
-                console.log('ProductEditor: Found category:', category);
                 selectedCategoryId = category.id;
             } else if (product.category) {
-                console.log(`ProductEditor: Using product.category: ${product.category}`);
                 const matchingCategory = categories.find(
                     c => c.name.toLowerCase() === product.category?.toLowerCase()
                 );
@@ -124,7 +121,6 @@
             }
 
             if (selectedCategoryId) {
-                console.log(`ProductEditor: Updating product ${savedProduct.id} with category ID ${selectedCategoryId}`);
                 await updateProductCategory(
                     savedProduct.id,
                     selectedCategoryId,

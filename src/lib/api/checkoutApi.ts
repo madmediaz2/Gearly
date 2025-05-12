@@ -7,7 +7,6 @@ export async function storeCheckoutSession(
     cartItems: ProductItem[]
 ): Promise<void> {
     try {
-        console.log(`Storing checkout session ${sessionId} for user ${userId} with ${cartItems.length} items`);
         
         const { error: sessionError } = await supabase
             .from('checkout_sessions')
@@ -39,7 +38,6 @@ export async function storeCheckoutSession(
             };
         });
 
-        console.log(`Prepared checkout items for DB storage:`, checkoutItems);
         
         const { error: itemsError } = await supabase
             .from('checkout_items')
@@ -50,7 +48,6 @@ export async function storeCheckoutSession(
             throw itemsError;
         }
 
-        console.log(`Successfully stored checkout session and items`);
     } catch (error) {
         console.error('Error storing checkout session:', error);
         throw error;
@@ -66,7 +63,6 @@ export async function getCheckoutSessionItems(
     sessionId: string
 ): Promise<Array<{ id: number, quantity: number }>> {
     try {
-        console.log(`Fetching checkout items for session ID: ${sessionId}`);
         
         const { data, error } = await supabase
             .from('checkout_items')
@@ -79,7 +75,6 @@ export async function getCheckoutSessionItems(
         }
 
         if (!data || data.length === 0) {
-            console.log(`No checkout items found for session ID: ${sessionId}`);
             return [];
         }
 
@@ -88,7 +83,6 @@ export async function getCheckoutSessionItems(
             quantity: Number(item.quantity)
         }));
         
-        console.log(`Retrieved ${mappedItems.length} checkout items:`, mappedItems);
         return mappedItems;
     } catch (error) {
         console.error('Error fetching checkout items:', error);
@@ -158,7 +152,6 @@ export async function updateProductStock(
                 continue;
             }
             
-            console.log(`Updating stock for product ${item.id}: Current stock: ${product.stock}, Quantity purchased: ${item.quantity}`);
             
             const newStock = Math.max(0, product.stock - item.quantity);
             
@@ -175,7 +168,6 @@ export async function updateProductStock(
                     message: `Update error: ${updateError.message}`
                 });
             } else {
-                console.log(`Stock updated successfully for product ${item.id}. New stock: ${newStock}`);
                 results.push({
                     id: item.id, 
                     success: true, 

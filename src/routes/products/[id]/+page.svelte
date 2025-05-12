@@ -7,11 +7,11 @@
         getItemQuantity,
         updateQuantityIfInCart,
     } from "$lib/stores/cart";
-    import { 
-        getShopItemById,
-        loadShopItems
-    } from "$lib/stores/shopItemStore";
-    import { comparisonStore, comparisonCount } from "$lib/stores/comparisonStore";
+    import { getShopItemById, loadShopItems } from "$lib/stores/shopItemStore";
+    import {
+        comparisonStore,
+        comparisonCount,
+    } from "$lib/stores/comparisonStore";
     import type { ProductItem } from "$lib/types/supabaseTypes";
     import ProductSpecifications from "../../../components/ProductSpecifications.svelte";
     import Button from "../../../components/ui/Button.svelte";
@@ -25,16 +25,15 @@
     let selectedVariant = $state("");
     //TODO: add variants to database
     let variants = $state<string[]>([]);
-    
+
     let isProductInComparison = $state(false);
     let canAddToComparison = $state(true);
 
-
-    async function loadProduct(){
+    async function loadProduct() {
         try {
             loading = true;
             const productId = page.params.id;
-            
+
             product = await getShopItemById(productId);
 
             if (!product) {
@@ -54,19 +53,20 @@
     }
 
     $effect(() => {
-        loadProduct()
-    })
+        loadProduct();
+    });
 
     $effect(() => {
         if (product?.id) {
             isProductInComparison = comparisonStore.isInComparison(product.id);
-            canAddToComparison = !comparisonStore.isComparisonFull() || isProductInComparison;
+            canAddToComparison =
+                !comparisonStore.isComparisonFull() || isProductInComparison;
         }
-    })
+    });
 
     function handleToggleComparison(item: ProductItem) {
         if (!item) return;
-        
+
         if (comparisonStore.isInComparison(item.id)) {
             comparisonStore.removeFromComparison(item.id);
             isProductInComparison = false;
@@ -76,7 +76,8 @@
                 isProductInComparison = true;
             }
         }
-        canAddToComparison = !comparisonStore.isComparisonFull() || isProductInComparison;
+        canAddToComparison =
+            !comparisonStore.isComparisonFull() || isProductInComparison;
     }
 
     async function fetchRelatedProducts() {
@@ -117,7 +118,6 @@
                 };
 
                 await addToCart(productWithVariant, quantity);
-                console.log("Added to cart successfully");
             }
         } catch (err) {
             console.error("Error adding to cart:", err);
@@ -234,8 +234,7 @@
                     <!-- svelte-ignore a11y_click_events_have_key_events --><!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
                     <img
                         src={image.url}
-                        alt={image.alt_text ||
-                            `${product.name} image ${i + 1}`}
+                        alt={image.alt_text || `${product.name} image ${i + 1}`}
                         class="w-16 h-16 object-cover rounded cursor-pointer
                             {currentImageIndex === i
                             ? 'border-2 border-blue-500'
@@ -315,17 +314,11 @@
         <div class="mb-6">
             <p class="text-lg mb-2">Quantity:</p>
             <div class="flex items-center">
-                <Button
-                    variant="icon"
-                    onclick={decreaseQuantity}
-                >
+                <Button variant="icon" onclick={decreaseQuantity}>
                     <span class="text-xl font-bold px-2">-</span>
                 </Button>
                 <span class="mx-4 text-xl">{quantity}</span>
-                <Button
-                    variant="icon"
-                    onclick={increaseQuantity}
-                >
+                <Button variant="icon" onclick={increaseQuantity}>
                     <span class="text-xl font-bold px-2">+</span>
                 </Button>
             </div>
@@ -333,13 +326,15 @@
 
         <!-- Compare button -->
         <div class="mb-6">
-            <Button 
-                variant="secondary" 
-                className="w-full" 
+            <Button
+                variant="secondary"
+                className="w-full"
                 onclick={() => handleToggleComparison(product)}
                 disabled={!canAddToComparison && !isProductInComparison}
             >
-                {isProductInComparison ? 'Remove from Compare' : 'Add to Compare'}
+                {isProductInComparison
+                    ? "Remove from Compare"
+                    : "Add to Compare"}
             </Button>
         </div>
 
@@ -371,9 +366,7 @@
 {#snippet RelatedProducts(products: ProductItem[])}
     {#if products.length > 0}
         <div class="mt-16">
-            <h2 class="text-2xl font-bold mb-4">
-                Gerelateerde Producten
-            </h2>
+            <h2 class="text-2xl font-bold mb-4">Gerelateerde Producten</h2>
 
             <div
                 class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4"

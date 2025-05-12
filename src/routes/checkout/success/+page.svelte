@@ -27,18 +27,14 @@
             }
             
             const data = await response.json();
-            console.log('Payment verification response:', data);
             
             if (data.success) {
-                console.log('Payment verification successful:', data);
                 try {
                     if (data.itemsProcessed > 0 && Array.isArray(data.purchasedItems)) {
-                        console.log('Updating shop item store with new stock levels');
                         await updateStockAfterCheckout(data.purchasedItems.map((item: {id: number}) => item.id));
                     }
                     
                     await clearCart();
-                    console.log('Cart cleared successfully');
                 } catch (clearError) {
                     console.error('Error clearing cart or updating stock:', clearError);
                 }

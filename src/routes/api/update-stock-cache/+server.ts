@@ -14,9 +14,7 @@ export async function GET({ url }) {
         if (idArray.length === 0) {
             return json({ success: false, message: 'Invalid product IDs format' }, { status: 400 });
         }
-        
-        console.log(`Fetching updated stock levels for products: ${idArray.join(', ')}`);
-        
+                
         const { data: products, error } = await supabase
             .from('products')
             .select('id, stock, price')

@@ -71,12 +71,10 @@ export async function initializeAuth() {
 				const cookieMatch = document.cookie.match(/supabase-auth-token=([^;]+)/);
 				if (cookieMatch && cookieMatch[1]) {
 					savedToken = cookieMatch[1];
-					console.log('Found saved JWT token in cookies');
 				}
 			}
 
 			if (savedToken) {
-				console.log('Found saved JWT token');
 				setToken(savedToken);
 
 				// Verify the token and get user info

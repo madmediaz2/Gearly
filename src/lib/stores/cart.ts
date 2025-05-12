@@ -56,7 +56,7 @@ user.subscribe(async (currentUser) => {
             
             cart.set(cartItems);
         } catch (error) {
-            console.log(error)
+            console.error(error)
             if (!(error instanceof Error && 
                 (error.message.includes('not found') || 
                  error.message.includes('does not exist')))
@@ -159,18 +159,14 @@ export async function updateQuantity(itemId: number, newQuantity: number) {
 export async function clearCart() {
     const currentUser = get(user);
     
-    console.log('Clearing cart');
     cartError.set(null);
     
     // Clear cart in store
     cart.set([]);
-    console.log('Cart cleared in local store');
     
     if (currentUser) {
-        console.log(`Clearing cart in database for user ${currentUser.id}`);
         try {
             await clearCartDB(currentUser.id);
-            console.log('Cart cleared in database successfully');
         } catch (error) {
             console.error('Error clearing cart in database:', error);
             cartError.set('Failed to clear your cart');

@@ -75,7 +75,6 @@
                         data.session.refresh_token || null
                     );
                     
-                    console.log("Auth tokens saved successfully");
                 }
                 
                 onClose();
@@ -97,7 +96,6 @@
                 if (data.user) {
                     updateUser(data.user);
                 }
-                console.log("Registration successful");
                 onClose();
             }
         } catch (error: Error | any) {

@@ -36,9 +36,7 @@
         
         try {
             await loadAllCategories();
-            
-            console.log(`Looking for category with slug: "${categorySlug}"`);
-            
+                        
             // First try to get the category by slug
             const categoryBySlug = getCategoryBySlug(categorySlug);
             
@@ -56,7 +54,6 @@
             }
             
             if (categoryInfo) {
-                console.log(`Using category: ${categoryInfo.name} (${categoryInfo.slug})`);
                 await loadShopItems(true);
                 
                 products = getItemsByCategory(categoryInfo.name);

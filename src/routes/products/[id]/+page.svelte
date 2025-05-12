@@ -26,8 +26,14 @@
     //TODO: add variants to database
     let variants = $state<string[]>([]);
 
-    let isProductInComparison = $state(false);
-    let canAddToComparison = $state(true);
+    let isProductInComparison = $derived(() => {
+        const _ = $comparisonStore;
+        return product?.id ? comparisonStore.isInComparison(product.id) : false;
+    });
+    let canAddToComparison = $derived(() => {
+        const _ = $comparisonStore;
+        return !comparisonStore.isComparisonFull() || isProductInComparison;
+    });
 
     async function loadProduct() {
         try {
@@ -56,28 +62,14 @@
         loadProduct();
     });
 
-    $effect(() => {
-        if (product?.id) {
-            isProductInComparison = comparisonStore.isInComparison(product.id);
-            canAddToComparison =
-                !comparisonStore.isComparisonFull() || isProductInComparison;
-        }
-    });
-
     function handleToggleComparison(item: ProductItem) {
         if (!item) return;
 
         if (comparisonStore.isInComparison(item.id)) {
             comparisonStore.removeFromComparison(item.id);
-            isProductInComparison = false;
         } else {
-            const added = comparisonStore.addToComparison(item);
-            if (added) {
-                isProductInComparison = true;
-            }
+            comparisonStore.addToComparison(item);
         }
-        canAddToComparison =
-            !comparisonStore.isComparisonFull() || isProductInComparison;
     }
 
     async function fetchRelatedProducts() {
@@ -332,7 +324,7 @@
                 onclick={() => handleToggleComparison(product)}
                 disabled={!canAddToComparison && !isProductInComparison}
             >
-                {isProductInComparison
+                {isProductInComparison()
                     ? "Remove from Compare"
                     : "Add to Compare"}
             </Button>

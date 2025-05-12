@@ -1,3 +1,13 @@
+<script lang="ts" module>
+    import { supabase } from "$lib/supabaseClient";
+    import { browser } from "$app/environment";
+
+    if (browser) {
+        // Make Supabase available globally for debugging
+        window.supabase = supabase;
+    }
+</script>
+
 <script lang="ts">
     import { onMount } from "svelte";
     import "../app.css";
@@ -6,12 +16,11 @@
     import Footer from "../components/Footer.svelte";
     import ComparisonPopup from "../components/ComparisonPopup.svelte";
     import { getRefreshToken, getToken } from "$lib/stores/authStore"
-    import { supabase } from "$lib/supabaseClient";
-    import { browser } from "$app/environment";
     let { children } = $props();
 
     onMount(async () => {
         if (browser) {
+            // Initialize auth which handles JWT token validation
             await initializeAuth();
             
             // Get tokens from our stores after initialization

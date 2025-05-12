@@ -4,13 +4,24 @@
     import type { ProductItem } from '$lib/types/supabaseTypes';
     import Button from './ui/Button.svelte';
     import Popup from './ui/Popup.svelte';
+    import { sheetOpenStore } from '$lib/stores/sheetStore';
     
-    let expanded = false;
-    let comparisonItems: ProductItem[] = [];
+    let expanded = $state(false);
+    let comparisonItems = $state<ProductItem[]>([]);
+    let isMobileSheetOpen = $state(false);
     
     // Subscribe to the comparison items
     comparisonStore.subscribe((state) => {
         comparisonItems = state.items;
+    });
+    
+    // Subscribe to sheetOpen state
+    sheetOpenStore.subscribe(value => {
+        isMobileSheetOpen = value;
+        // Close comparison popup if MobileSheet is opened
+        if (value && expanded) {
+            expanded = false;
+        }
     });
     
     function toggleExpanded() {
@@ -27,7 +38,7 @@
     }
 </script>
 
-{#if $comparisonCount > 0}
+{#if $comparisonCount > 0 && !isMobileSheetOpen}
     <div class="fixed bottom-4 right-4 z-50">
         {#if !expanded}
             <Button 

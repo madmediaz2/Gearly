@@ -3,7 +3,7 @@
     import AuthPopup from "./AuthPopup.svelte";
     import MobileSheet from "./MobileSheet.svelte";
     import SearchBar from "./SearchBar.svelte";
-    import { user, logout } from "$lib/stores/authStore";
+    import { user, logout, getToken, getRefreshToken } from "$lib/stores/authStore";
     import AccountPopup from "./AccountPopup.svelte";
     import CartPopup from "./CartPopup.svelte";
     import { type PopupControls } from "$lib/types/popupTypes";
@@ -17,7 +17,7 @@
         loadAllCategories 
     } from "$lib/stores/categoryStore";
     import type { Category } from "$lib/stores/categoryStore";
-    import { getToken, getRefreshToken } from "$lib/stores/authStore";
+    import { sheetOpenStore } from '$lib/stores/sheetStore';
 
     let searchQuery = $state("");
     let sheetOpen = $state(false);
@@ -41,6 +41,7 @@
 
     function toggleSheet() {
         sheetOpen = !sheetOpen;
+        sheetOpenStore.set(sheetOpen);
         closeAuthPopup();
         closeAccountPopUp();
     }
@@ -142,6 +143,7 @@
                     closeCartPopUp();
                     TransitionEvent.apply;
                     sheetOpen = false;
+                    sheetOpenStore.set(false);
                 }
             };
 

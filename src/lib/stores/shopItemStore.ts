@@ -40,7 +40,7 @@ if (browser) {
  * @returns Promise with the loaded shop items
  */
 export async function loadShopItems(forceRefresh: boolean = false): Promise<ProductItem[]> {
-    // Return cached items if they exist and no refresh is required
+    
     if (!forceRefresh && cachedItems.length > 0) {
         shopItems.set(cachedItems);
         return cachedItems;
@@ -50,7 +50,14 @@ export async function loadShopItems(forceRefresh: boolean = false): Promise<Prod
     shopItemsError.set(null);
     
     try {
-        const items = await fetchShopItems();
+        const items = await fetchShopItems();        
+        const categories = new Set<string>();
+        items.forEach(item => {
+            if (item.category) {
+                categories.add(item.category);
+            }
+        });
+        
         shopItems.set(items);
         cachedItems = items;
         return items;
@@ -75,7 +82,6 @@ export async function loadShopItems(forceRefresh: boolean = false): Promise<Prod
  * @returns Promise with the shop item if found, or null if not
  */
 export async function getShopItemById(itemId: number | string, forceRefresh: boolean = false): Promise<ProductItem | null> {
-    // Try to find the item in the cache first
     if (!forceRefresh) {
         const cachedItem = cachedItems.find(item => item.id.toString() === itemId.toString());
         if (cachedItem) {
@@ -83,7 +89,6 @@ export async function getShopItemById(itemId: number | string, forceRefresh: boo
             return cachedItem;
         }
 
-        // Also check the store in case it has items the cache doesn't
         const storeItems = get(shopItems);
         const storeItem = storeItems.find(item => item.id.toString() === itemId.toString());
         if (storeItem) {
@@ -92,7 +97,6 @@ export async function getShopItemById(itemId: number | string, forceRefresh: boo
         }
     }
 
-    // If not in cache or refresh is required, fetch from database
     isShopItemsLoading.set(true);
     shopItemsError.set(null);
     
@@ -159,9 +163,31 @@ export function getItemsByBrand(brandName: string): ProductItem[] {
  * @returns Array of shop items in that category
  */
 export function getItemsByCategory(category: string): ProductItem[] {
-    return get(shopItems).filter(item => 
-        item.category && item.category.toLowerCase() === category.toLowerCase()
-    );
+    if (!category) {
+        return [];
+    }
+    
+    const normalizedCategory = category.toLowerCase();
+    
+    const allItems = get(shopItems);
+    
+    const availableCategories = new Set<string>();
+    allItems.forEach(item => {
+        if (item.category) {
+            availableCategories.add(item.category.toLowerCase());
+        }
+    });
+    
+    const result = allItems.filter(item => {
+        if (!item.category) {
+            return false;
+        }
+        
+        const matches = item.category.toLowerCase() === normalizedCategory;
+        return matches;
+    });
+    
+    return result;
 }
 
 /**

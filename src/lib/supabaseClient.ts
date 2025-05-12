@@ -26,7 +26,7 @@ export const createAdminClient = () => {
             persistSession: true,
             autoRefreshToken: true,
             detectSessionInUrl: true,
-            flowType: 'implicit'
+            flowType: 'implicit',
           }
     });
 };

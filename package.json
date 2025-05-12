@@ -47,10 +47,13 @@
 		"@node-rs/argon2": "^2.0.2",
 		"@oslojs/crypto": "^1.0.1",
 		"@oslojs/encoding": "^1.1.0",
+		"@stripe/stripe-js": "^7.3.0",
 		"@supabase/supabase-js": "^2.49.4",
+		"@types/stripe": "^8.0.416",
 		"drizzle-orm": "^0.40.0",
 		"install": "^0.13.0",
 		"npm": "^10.9.2",
-		"postgres": "^3.4.5"
+		"postgres": "^3.4.5",
+		"stripe": "^18.1.0"
 	}
 }

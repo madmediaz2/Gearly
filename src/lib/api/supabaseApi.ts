@@ -42,8 +42,36 @@ export async function fetchShopItems(): Promise<ProductItem[]> {
 			return acc;
 		}, {} as Record<number, Brand>);
 	}
+	// Fetch categories for all products
+	const productIds = products.map(p => p.id);
+	const productCategories: Record<number, string> = {};
+	
+	if (productIds.length > 0) {
+		const { data: categoryData, error: categoryError } = await supabase
+			.from('product_categories')
+			.select(`
+				product_id,
+				categories:category_id (
+					name
+				)
+			`)
+			.in('product_id', productIds);
+			
+		if (!categoryError && categoryData && categoryData.length > 0) {
+			// Create a lookup map for categories by product ID
+			categoryData.forEach(item => {
+				if (item.categories && typeof item.categories === 'object' && 'name' in item.categories) {
+					productCategories[item.product_id] = item.categories.name as string;
+				}
+			});
+		} else if (categoryError) {
+			console.error('Error fetching product categories:', categoryError);
+		}
+	}
+	
 	return (products as ProductWithImages[]).map(product => {
 		const brand = product.brand_id ? brands[product.brand_id] : null;
+		const category = productCategories[product.id] || undefined;
 		
 		// Process specifications if available
 		const specifications = [];
@@ -73,6 +101,7 @@ export async function fetchShopItems(): Promise<ProductItem[]> {
 			stock: product.stock,
 			product_id: product.id,
 			variant: null,
+			category: category,
 			specifications: specifications.length > 0 ? specifications : undefined,
 		};
 	});

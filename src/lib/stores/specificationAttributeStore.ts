@@ -276,16 +276,42 @@ export async function deleteAttribute(attributeId: number): Promise<{ success: b
 
 /**
  * Gets all specifications for a product
+ * First tries to use cached data, then fetches from the API if necessary
  * @param productId The ID of the product
+ * @param forceRefresh If true, forces a refresh from API
  * @returns Promise with product specifications and their attributes
  */
-export async function getProductSpecificationsWithAttributes(productId: number): Promise<Array<{
+export async function getProductSpecificationsWithAttributes(
+    productId: number,
+    forceRefresh: boolean = false
+): Promise<Array<{
     attribute: SpecificationAttribute;
     value: string;
 }>> {
+    const cacheKey = `product_specs_${productId}`;
+    
+    if (browser && !forceRefresh) {
+        const cachedProductSpecs = localStorage.getItem(cacheKey);
+        if (cachedProductSpecs) {
+            try {
+                const parsedSpecs = JSON.parse(cachedProductSpecs);
+                return parsedSpecs;
+            } catch (e) {
+                console.error('Failed to parse cached product specifications:', e);
+            }
+        }
+    }
+    
     try {
         attributesError.set(null);
+        isAttributesLoading.set(true);
+        
         const specifications = await getProductSpecifications(productId);
+        
+        if (browser && specifications.length > 0) {
+            localStorage.setItem(cacheKey, JSON.stringify(specifications));
+        }
+        
         return specifications;
     } catch (error) {
         console.error(`Error getting specifications for product ${productId}:`, error);
@@ -295,6 +321,8 @@ export async function getProductSpecificationsWithAttributes(productId: number):
             attributesError.set(`Failed to get specifications for product ${productId}`);
         }
         throw error;
+    } finally {
+        isAttributesLoading.set(false);
     }
 }
 

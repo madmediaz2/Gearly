@@ -3,7 +3,7 @@
     import type { ProductItem } from "$lib/types/supabaseTypes";
     import Button from "../../components/ui/Button.svelte";
     import { onMount } from "svelte";
-    import { getProductSpecifications } from "$lib/api/specificationsApi";
+    import { getProductSpecificationsWithAttributes } from "$lib/stores/specificationAttributeStore";
     
     let comparisonItems = $state<ProductItem[]>([]);
     
@@ -44,10 +44,10 @@
             for (const product of comparisonItems) {
                 if (!product.id) continue;
                 
-                const specs = await getProductSpecifications(product.id);
+                const specs = await getProductSpecificationsWithAttributes(product.id);
                 specsMap[product.id] = specs;
                 
-                specs.forEach(spec => {
+                specs.forEach((spec: {attribute: any, value: string}) => {
                     attributeSet.add(spec.attribute.name);
                 });
             }

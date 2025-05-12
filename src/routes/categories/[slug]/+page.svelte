@@ -10,7 +10,8 @@
     import type { ProductItem } from "$lib/types/supabaseTypes";
     import ShopItem from "../../../components/ShopItem.svelte";
     import { 
-        getCategoryBySlug, 
+        getCategoryByName, 
+        getCategoryBySlug,
         loadAllCategories, 
         isCategoriesLoading,
         categoriesError 
@@ -22,6 +23,7 @@
     let products = $state<ProductItem[]>([]);
     let loading = $state(true);
     let error = $state<string | null>(null);
+
 
     $effect(() => {
         categorySlug = $page.params.slug;
@@ -35,18 +37,33 @@
         try {
             await loadAllCategories();
             
-            categoryInfo = getCategoryBySlug(categorySlug);
+            console.log(`Looking for category with slug: "${categorySlug}"`);
             
-            if (!categoryInfo) {
-                error = `Category "${categorySlug}" not found`;
-                return;
+            // First try to get the category by slug
+            const categoryBySlug = getCategoryBySlug(categorySlug);
+            
+            if (categoryBySlug) {
+                categoryInfo = categoryBySlug;
+            } else {
+                const matchingCategories = getCategoryByName(categorySlug);
+                
+                if (matchingCategories.length === 0) {
+                    error = `Category "${categorySlug}" not found`;
+                    return;
+                }
+                
+                categoryInfo = matchingCategories[0];
             }
             
-            // Load all products
-            await loadShopItems();
-            
-            // Filter products by category name
-            products = getItemsByCategory(categoryInfo.name); // Changed back to use categoryInfo.name
+            if (categoryInfo) {
+                console.log(`Using category: ${categoryInfo.name} (${categoryInfo.slug})`);
+                await loadShopItems(true);
+                
+                products = getItemsByCategory(categoryInfo.name);
+            } else {
+                console.error("Category processing error - categoryInfo is null");
+                error = "Failed to process category information";
+            }
         } catch (err) {
             console.error("Error loading category products:", err);
             if (err instanceof Error) {
@@ -79,7 +96,7 @@
 
 {#snippet ProductsList()}
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {#each products as product (product.id)}
+        {#each products as product}
             <ShopItem {product} />
         {/each}
     </div>

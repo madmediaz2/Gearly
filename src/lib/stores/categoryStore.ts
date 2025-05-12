@@ -110,7 +110,6 @@ export function getCategoryById(categoryId: number): Category | null {
  * @returns Category if found, or null if not
  */
 export function getCategoryBySlug(slug: string): Category | null {
-    // Try to find the category in the cache first
     const cachedCategory = cachedCategories.find(
         category => category.slug.toLowerCase() === slug.toLowerCase()
     );
@@ -119,7 +118,6 @@ export function getCategoryBySlug(slug: string): Category | null {
         return cachedCategory;
     }
 
-    // Also check the store in case it has items the cache doesn't
     const storeCategories = get(categories);
     const storeCategory = storeCategories.find(
         category => category.slug.toLowerCase() === slug.toLowerCase()
@@ -133,33 +131,35 @@ export function getCategoryBySlug(slug: string): Category | null {
 }
 
 /**
- * Gets a single category by name
+ * Gets all categories that match the given name
  * @param name The name of the category to get
- * @returns Category if found, or null if not
+ * @returns Array of matching categories
  */
-export function getCategoryByName(name: string): Category | null {
+export function getCategoryByName(name: string): Category[] {    
     const normalizedName = name.toLowerCase();
+    const matchingCachedCategories = cachedCategories.filter(
+        category => category.name.toLowerCase() === normalizedName
+    );
     
-    // Try to find the category in the cache first
-    const cachedCategory = cachedCategories.find(
+    const storeCategories = get(categories);    
+    const matchingStoreCategories = storeCategories.filter(
         category => category.name.toLowerCase() === normalizedName
     );
-    if (cachedCategory) {
-        selectedCategory.set(cachedCategory);
-        return cachedCategory;
-    }
 
-    // Also check the store in case it has items the cache doesn't
-    const storeCategories = get(categories);
-    const storeCategory = storeCategories.find(
-        category => category.name.toLowerCase() === normalizedName
-    );
-    if (storeCategory) {
-        selectedCategory.set(storeCategory);
-        return storeCategory;
+    const allMatches = [...matchingCachedCategories];
+    matchingStoreCategories.forEach(storeCategory => {
+        // Only add if not already in the result list
+        if (!allMatches.some(cat => cat.id === storeCategory.id)) {
+            allMatches.push(storeCategory);
+        }
+    });
+    
+    // If we found any categories, set the first one as the selected category
+    if (allMatches.length > 0) {
+        selectedCategory.set(allMatches[0]);
     }
-
-    return null;
+    
+    return allMatches;
 }
 
 /**

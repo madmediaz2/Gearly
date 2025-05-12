@@ -93,7 +93,7 @@
         }
         
         // Set cookies for server-side authentication
-        document.cookie = `supabase-auth-token=${accessToken}; path=/; max-age=3600; SameSite=Lax`;
+        document.cookie = `supabase-auth-token=${accessToken}; path=/; max-age=10000; SameSite=Lax`;
         
         // Make a fetch request with the Authorization header first to validate authorization
         fetch('/admin/products', {

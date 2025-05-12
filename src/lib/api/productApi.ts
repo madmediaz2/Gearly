@@ -1,4 +1,4 @@
-import { supabase } from '../supabaseClient';
+import { supabase, supabaseAdmin } from '../supabaseClient';
 import type { ProductItem, Brand } from '../types/supabaseTypes';
 
 /**
@@ -47,60 +47,119 @@ export async function saveProduct(
 
 /**
  * Uploads product images to storage and creates database records
+ * Uses Supabase Admin client to bypass row-level security policies
  * @param productId The ID of the product to associate images with
  * @param imageFiles The file list containing images to upload
  * @param productName The name of the product (used for alt text)
- * @returns Promise that resolves when all uploads are complete
+ * @returns Promise with array of upload results, including any errors
  */
 export async function uploadProductImages(
 	productId: number,
 	imageFiles: FileList,
 	productName: string
-): Promise<void> {
-	if (!imageFiles || imageFiles.length === 0) return;
+): Promise<{ success: boolean; errors: string[] }> {
+	if (!imageFiles || imageFiles.length === 0) return { success: true, errors: [] };
+
+	// Configuration
+	const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+	const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+	const BUCKET_NAME = 'products';
+	const FOLDER_PATH = 'product-images';
+
+	const errors: string[] = [];
+	const uploadPromises = [];
 
 	for (let i = 0; i < imageFiles.length; i++) {
 		const file = imageFiles[i];
-		const fileExt = file.name.split('.').pop();
-		const fileName = `${productId}_${Date.now()}_${i}.${fileExt}`;
-		const filePath = `product-images/${fileName}`;
-
-		const { error: uploadError } = await supabase
-			.storage
-			.from('products')
-			.upload(filePath, file);
-
-		if (uploadError) {
-			console.error('Error uploading image:', uploadError);
+		
+		// Validate file type
+		if (!ALLOWED_TYPES.includes(file.type)) {
+			errors.push(`File "${file.name}" is not a supported image type. Supported types are JPEG, PNG, WebP, and GIF.`);
 			continue;
 		}
 
-		const { data: publicUrl } = supabase
-			.storage
-			.from('products')
-			.getPublicUrl(filePath);
+		// Validate file size
+		if (file.size > MAX_FILE_SIZE) {
+			errors.push(`File "${file.name}" exceeds the maximum size of 5MB.`);
+			continue;
+		}
 
-		if (!publicUrl) continue;
+		// Generate a safe filename with UUID-like uniqueness
+		const fileExt = file.name.split('.').pop() || 'jpg';
+		const safeFileName = `${productId}_${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+		const filePath = `${FOLDER_PATH}/${safeFileName}`;
 
-		await supabase
-			.from('product_images')
-			.insert([{
-				product_id: productId,
-				url: publicUrl.publicUrl,
-				alt_text: productName,
-				position: i
-			}]);
+		const uploadPromise = (async () => {
+			try {
+				// Use supabaseAdmin to upload the file to bypass RLS
+				const { error: uploadError } = await supabaseAdmin
+					.storage
+					.from(BUCKET_NAME)
+					.upload(filePath, file, {
+						cacheControl: '3600',
+						upsert: false
+					});
+
+				if (uploadError) {
+					errors.push(`Failed to upload "${file.name}": ${uploadError.message}`);
+					return;
+				}
+
+				// Get the public URL for the file
+				const { data: publicUrlData } = supabaseAdmin
+					.storage
+					.from(BUCKET_NAME)
+					.getPublicUrl(filePath);
+
+				if (!publicUrlData || !publicUrlData.publicUrl) {
+					errors.push(`Failed to get public URL for "${file.name}"`);
+					return;
+				}
+				
+				const { data: insertData, error: insertError } = await supabaseAdmin
+					.from('product_images')
+					.insert([{
+						product_id: productId,
+						url: publicUrlData.publicUrl,
+						alt_text: `${productName} - Image ${i + 1}`,
+						position: i
+					}])
+					.select('id');
+
+				if (insertError) {
+					console.error('Database insert error details:', insertError);
+					errors.push(`Failed to create database record for "${file.name}": ${insertError.message}`);
+					
+					await supabaseAdmin.storage.from(BUCKET_NAME).remove([filePath]);
+					return;
+				}
+				
+				console.log(`Successfully inserted image record with ID: ${insertData?.[0]?.id}`);
+			} catch (err) {
+				errors.push(`Unexpected error processing "${file.name}": ${err instanceof Error ? err.message : String(err)}`);
+			}
+		})();
+
+		uploadPromises.push(uploadPromise);
 	}
+
+	await Promise.all(uploadPromises);
+
+	return {
+		success: errors.length === 0,
+		errors
+	};
 }
 
 /**
  * Deletes a product image
+ * Uses Supabase Admin client to bypass row-level security policies
  * @param imageId The ID of the image to delete
  * @returns Promise with success status or throws error
  */
 export async function deleteProductImage(imageId: number): Promise<boolean> {
-	// First get the image URL to delete the file from storage
-	const { data: imageData, error: fetchError } = await supabase
+	// First get the image URL to delete the file from storage using admin client
+	const { data: imageData, error: fetchError } = await supabaseAdmin
 		.from('product_images')
 		.select('url')
 		.eq('id', imageId)
@@ -108,26 +167,47 @@ export async function deleteProductImage(imageId: number): Promise<boolean> {
 
 	if (fetchError) throw fetchError;
 
-	// Delete the database record
-	const { error: deleteError } = await supabase
+	// Delete the database record first using admin client
+	const { error: deleteError } = await supabaseAdmin
 		.from('product_images')
 		.delete()
 		.eq('id', imageId);
 
 	if (deleteError) throw deleteError;
 
-	// Delete the file from storage if URL exists
 	if (imageData?.url) {
 		try {
+			const BUCKET_NAME = 'products';
 			const storageUrl = new URL(imageData.url);
-			const pathParts = storageUrl.pathname.split('/');
-			const storagePath = pathParts.slice(2).join('/');
+			
+			let storagePath: string | null = null;
+			
+			const pathRegex = new RegExp(`/storage/v1/object/public/${BUCKET_NAME}/(.+)`);
+			const match = storageUrl.pathname.match(pathRegex);
+			
+			if (match && match[1]) {
+				storagePath = match[1];
+			} else {
+				const parts = storageUrl.pathname.split(BUCKET_NAME + '/');
+				if (parts.length > 1) {
+					storagePath = parts[1];
+				}
+			}
 
 			if (storagePath) {
-				await supabase
+				storagePath = decodeURIComponent(storagePath);
+				
+				console.log(`Deleting file from storage: ${storagePath}`);
+				const { error: removeError } = await supabaseAdmin
 					.storage
-					.from('products')
+					.from(BUCKET_NAME)
 					.remove([storagePath]);
+					
+				if (removeError) {
+					console.warn('Error removing file from storage:', removeError);
+				}
+			} else {
+				console.warn('Could not extract storage path from URL:', imageData.url);
 			}
 		} catch (err) {
 			console.warn('Could not parse storage URL or delete file:', err);
@@ -282,6 +362,7 @@ export async function removeProductCategory(productId: number): Promise<boolean>
 
 /**
  * Creates a product image entry in the database
+ * Uses Supabase Admin client to bypass row-level security policies
  * @param productId The product ID to associate with the image
  * @param imageUrl The URL of the uploaded image
  * @param altText Optional alt text for the image
@@ -294,7 +375,7 @@ export async function createProductImage(
 	altText?: string,
 	position: number = 0
 ) {
-	const { data, error } = await supabase
+	const { data, error } = await supabaseAdmin
 		.from('product_images')
 		.insert([{
 			product_id: productId,

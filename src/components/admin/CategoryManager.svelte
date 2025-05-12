@@ -3,11 +3,16 @@
     import Button from "../ui/Button.svelte";
     import Input from "../ui/Input.svelte";
     import NotificationMessage from "../ui/NotificationMessage.svelte";
-    import { loadCategories } from "$lib/api/productApi";
-    import { createCategory as createCategoryApi, deleteCategory as deleteCategoryApi } from "$lib/api/supabaseApi";
+    import { 
+        categories, 
+        isCategoriesLoading, 
+        categoriesError, 
+        loadAllCategories, 
+        createCategory, 
+        deleteCategory 
+    } from "$lib/stores/categoryStore";
     
-    // State variables
-    let categories = $state<{id: number, name: string, slug?: string}[]>([]);
+    // State variables for local components
     let loading = $state(true);
     let error = $state<string | null>(null);
     let success = $state<string | null>(null);
@@ -17,14 +22,25 @@
     let categorySlug = $state("");
     let creatingCategory = $state(false);
     
-    onMount(async () => {
-        await loadCategoriesData();
+    let categoriesList = $derived($categories);
+    let isLoading = $derived($isCategoriesLoading);
+    let storeError = $derived($categoriesError);
+    
+    $effect(() => {
+        if (storeError) {
+            error = storeError;
+        }
     });
     
-    async function loadCategoriesData() {
+    onMount(async () => {
+        await loadCategoriesData(true);
+    });
+    
+    async function loadCategoriesData(onMount = false) {
         try {
+            error = null;
             loading = true;
-            categories = await loadCategories();
+            await loadAllCategories(!onMount); // Force refresh to get latest data
             loading = false;
         } catch (err: any) {
             error = err.message || "Failed to load categories";
@@ -44,9 +60,7 @@
         creatingCategory = true;
         
         try {
-            await createCategoryApi(categoryName, categorySlug);
-            await loadCategoriesData();
-            
+            await createCategory(categoryName, categorySlug);
             // Reset form
             categoryName = "";
             categorySlug = "";
@@ -69,10 +83,11 @@
         success = null;
         
         try {
-            await deleteCategoryApi(categoryId);
-            await loadCategoriesData();
+            const result = await deleteCategory(categoryId);
             
-            success = "Category deleted successfully";
+            if (result.success) {
+                success = "Category deleted successfully";
+            }
         } catch (err: any) {
             error = err.message || "Failed to delete category";
             console.error(error);
@@ -156,7 +171,7 @@
     <NotificationMessage message={error} type="error" />
     <NotificationMessage message={success} type="success" />
     
-    {#if loading}
+    {#if isLoading || loading}
         <p class="py-2">Loading categories...</p>
     {:else}
         <div>
@@ -164,7 +179,7 @@
                 {@render CreateCategoryForm()}
             </div>
             <div>
-                {@render CategoriesTable(categories)}
+                {@render CategoriesTable(categoriesList)}
             </div>
         </div>
     {/if}

@@ -13,9 +13,19 @@
         titleSeperator?: boolean;
         isSmallScreen?: boolean;
         isLoading?: boolean;
+        position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'center';
     }
 
-    let { children, title, isOpen, onClose, errorMessage = $bindable(), titleSeperator, isLoading = $bindable(false)}: Props = $props();
+    let { 
+        children, 
+        title, 
+        isOpen, 
+        onClose, 
+        errorMessage = $bindable(), 
+        titleSeperator, 
+        isLoading = $bindable(false),
+        position = 'top-right'
+    }: Props = $props();
 
     let isSmallScreen: boolean = $state(false);
 
@@ -54,12 +64,51 @@
             };
         }
     });
+
+    // Helper functions for transitions based on position
+    function getTransitionY(pos: string): number {
+        if (isSmallScreen) return 20;
+        
+        switch (pos) {
+            case 'top-right':
+            case 'top-left':
+                return -20;
+            case 'bottom-right':
+            case 'bottom-left':
+                return 20;
+            case 'center':
+                return 0;
+            default:
+                return -20;
+        }
+    }
+
+    function getTransitionX(pos: string): number {
+        if (isSmallScreen) return 0;
+        
+        switch (pos) {
+            case 'top-left':
+            case 'bottom-left':
+                return -20;
+            case 'top-right':
+            case 'bottom-right':
+                return 20;
+            case 'center':
+                return 0;
+            default:
+                return 0;
+        }
+    }
 </script>
 
 {#if isOpen}
     <div
         class="fixed inset-0 z-51 overflow-hidden"
-        transition:fly={{ y: isSmallScreen ? 20 : -20, duration: 200 }}
+        transition:fly={{ 
+            y: getTransitionY(position), 
+            x: getTransitionX(position), 
+            duration: 200 
+        }}
     >
         <!-- Overlay --><!-- svelte-ignore a11y_no_static_element_interactions --><!-- svelte-ignore a11y_click_events_have_key_events -->
         <div
@@ -73,7 +122,14 @@
 
         <!-- Popup Content -->
         <div
-            class="fixed bottom-0 sm:absolute sm:bottom-auto sm:top-20 right-0 sm:right-8 w-full max-w-md bg-white rounded-lg shadow-lg transform transition-all"
+            class={`fixed w-full max-w-md bg-white rounded-lg shadow-lg transform transition-all
+                ${isSmallScreen ? 'bottom-0 right-0' : 'sm:absolute'} 
+                ${!isSmallScreen && position === 'top-right' ? 'sm:top-20 sm:right-8 sm:bottom-auto' : ''}
+                ${!isSmallScreen && position === 'top-left' ? 'sm:top-20 sm:left-8 sm:bottom-auto' : ''}
+                ${!isSmallScreen && position === 'bottom-right' ? 'sm:bottom-20 sm:right-8 sm:top-auto' : ''}
+                ${!isSmallScreen && position === 'bottom-left' ? 'sm:bottom-20 sm:left-8 sm:top-auto' : ''}
+                ${!isSmallScreen && position === 'center' ? 'sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2' : ''}
+            `}
         >
             <div class="p-5">
                 <div class="flex items-center justify-between mb-4 {titleSeperator && 'border-b border-gray-200'}">
